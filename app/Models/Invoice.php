@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Invoice extends Model
 {
@@ -59,6 +60,16 @@ class Invoice extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class)->orderBy('date');
+    }
+
+    public function eInvoice(): HasOne
+    {
+        return $this->hasOne(EInvoiceSubmission::class);
+    }
+
+    public function isEInvoiceValid(): bool
+    {
+        return $this->eInvoice?->isValid() ?? false;
     }
 
     public function amountDue(): float

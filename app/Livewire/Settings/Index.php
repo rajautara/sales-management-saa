@@ -4,8 +4,8 @@ namespace App\Livewire\Settings;
 
 use App\Models\Company;
 use App\Models\Setting;
-use Livewire\Component;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 use Livewire\WithFileUploads;
 
 #[Layout('layouts.app')]
@@ -14,22 +14,52 @@ class Index extends Component
     use WithFileUploads;
 
     public string $companyName = '';
+
     public ?string $companyRegistrationNo = null;
+
     public ?string $companyAddress = null;
+
     public ?string $companyPhone = null;
+
     public ?string $companyEmail = null;
+
     public string $companyCurrency = 'MYR';
-    
+
+    // e-Invoice (MyInvois) company fields
+    public ?string $companyTin = null;
+
+    public ?string $companySstRegistrationNo = null;
+
+    public ?string $companyMsicCode = null;
+
+    public ?string $companyBusinessActivityDesc = null;
+
+    public ?string $companyAddressCity = null;
+
+    public ?string $companyAddressPostcode = null;
+
+    public ?string $companyAddressStateCode = null;
+
+    public string $companyAddressCountryCode = 'MYS';
+
     public $logo;
+
     public ?string $existingLogoPath = null;
 
     public string $taxDefault = '0';
+
     public string $quotationPrefix = 'QT';
+
     public string $salesOrderPrefix = 'SO';
+
     public string $deliveryOrderPrefix = 'DO';
+
     public string $invoicePrefix = 'INV';
+
     public string $receiptPrefix = 'RC';
+
     public string $purchaseOrderPrefix = 'PO';
+
     public ?string $invoiceTerms = null;
 
     public function mount(): void
@@ -48,6 +78,15 @@ class Index extends Component
             $this->companyEmail = $company->email;
             $this->companyCurrency = $company->currency;
             $this->existingLogoPath = $company->logo_path;
+
+            $this->companyTin = $company->tin;
+            $this->companySstRegistrationNo = $company->sst_registration_no;
+            $this->companyMsicCode = $company->msic_code;
+            $this->companyBusinessActivityDesc = $company->business_activity_desc;
+            $this->companyAddressCity = $company->address_city;
+            $this->companyAddressPostcode = $company->address_postcode;
+            $this->companyAddressStateCode = $company->address_state_code;
+            $this->companyAddressCountryCode = $company->address_country_code ?: 'MYS';
         }
 
         $this->taxDefault = (string) Setting::get('tax_default', '0');
@@ -69,6 +108,14 @@ class Index extends Component
             'companyPhone' => ['nullable', 'string', 'max:255'],
             'companyEmail' => ['nullable', 'email', 'max:255'],
             'companyCurrency' => ['required', 'string', 'max:3'],
+            'companyTin' => ['nullable', 'string', 'max:255'],
+            'companySstRegistrationNo' => ['nullable', 'string', 'max:255'],
+            'companyMsicCode' => ['nullable', 'string', 'max:10'],
+            'companyBusinessActivityDesc' => ['nullable', 'string', 'max:255'],
+            'companyAddressCity' => ['nullable', 'string', 'max:255'],
+            'companyAddressPostcode' => ['nullable', 'string', 'max:10'],
+            'companyAddressStateCode' => ['nullable', 'string', 'max:2'],
+            'companyAddressCountryCode' => ['nullable', 'string', 'max:3'],
             'logo' => ['nullable', 'image', 'max:1024'], // max 1MB
             'taxDefault' => ['nullable', 'numeric', 'min:0'],
             'quotationPrefix' => ['nullable', 'string', 'max:50'],
@@ -95,6 +142,14 @@ class Index extends Component
                 'phone' => $validated['companyPhone'],
                 'email' => $validated['companyEmail'],
                 'currency' => $validated['companyCurrency'],
+                'tin' => $validated['companyTin'],
+                'sst_registration_no' => $validated['companySstRegistrationNo'],
+                'msic_code' => $validated['companyMsicCode'],
+                'business_activity_desc' => $validated['companyBusinessActivityDesc'],
+                'address_city' => $validated['companyAddressCity'],
+                'address_postcode' => $validated['companyAddressPostcode'],
+                'address_state_code' => $validated['companyAddressStateCode'],
+                'address_country_code' => $validated['companyAddressCountryCode'] ?: 'MYS',
             ]);
 
             if ($this->logo) {
