@@ -203,6 +203,13 @@
                 @endif
 
                 <div class="flex flex-wrap items-center gap-2">
+                    @if ($ei->status->value === 'invalid')
+                        <button type="button" wire:click="submitEInvoice" wire:loading.attr="disabled" wire:target="submitEInvoice"
+                            class="inline-flex items-center px-3 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition disabled:opacity-50">
+                            <span wire:loading.remove wire:target="submitEInvoice">Resubmit to MyInvois</span>
+                            <span wire:loading wire:target="submitEInvoice">Submitting…</span>
+                        </button>
+                    @endif
                     <button type="button" wire:click="refreshEInvoiceStatus" wire:loading.attr="disabled" wire:target="refreshEInvoiceStatus"
                         class="inline-flex items-center px-3 py-2 bg-gray-700 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition disabled:opacity-50">
                         Check Status

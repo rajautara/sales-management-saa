@@ -3,6 +3,7 @@
 use App\Enums\EInvoiceStatus;
 use App\Enums\InvoiceStatus;
 use App\Enums\ProductType;
+use App\Livewire\Customers\Form;
 use App\Livewire\Invoices\Show as InvoiceShow;
 use App\Livewire\Settings\Index;
 use App\Models\Company;
@@ -14,6 +15,7 @@ use App\Models\User;
 use App\Services\MyInvois\DocumentSigner;
 use App\Services\MyInvois\EInvoiceService;
 use App\Services\MyInvois\InvoiceDocumentBuilder;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 
@@ -512,25 +514,89 @@ it('renders the invoice PDF with a QR code for a validated e-invoice', function 
     $this->get(route('invoices.pdf', $invoice))->assertOk();
 });
 
+it('saves buyer e-invoice fields from the customer form', function () {
+    $company = einvoiceCompany();
+    $user = User::factory()->create(['company_id' => $company->id]);
+    $user->assignRole('admin');
+    $this->actingAs($user);
+
+    Livewire::test(Form::class)
+        ->set('name', 'Buyer Sdn Bhd')
+        ->set('tin', 'C1111111111')
+        ->set('registrationType', 'BRN')
+        ->set('registrationNo', '202401000123')
+        ->set('addressStateCode', '10')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $customer = Customer::where('name', 'Buyer Sdn Bhd')->first();
+    expect($customer->tin)->toBe('C1111111111');
+    expect($customer->registration_no)->toBe('202401000123');
+    expect($customer->address_state_code)->toBe('10');
+});
+
+it('enforces one e-invoice submission row per invoice', function () {
+    $company = einvoiceCompany();
+    $this->actingAs(User::factory()->create(['company_id' => $company->id]));
+    $invoice = einvoiceReadyInvoice($company);
+
+    EInvoiceSubmission::create([
+        'company_id' => $company->id,
+        'invoice_id' => $invoice->id,
+        'status' => EInvoiceStatus::SUBMITTED,
+        'uuid' => 'UUID-1',
+    ]);
+
+    expect(fn () => EInvoiceSubmission::create([
+        'company_id' => $company->id,
+        'invoice_id' => $invoice->id,
+        'status' => EInvoiceStatus::SUBMITTED,
+        'uuid' => 'UUID-2',
+    ]))->toThrow(QueryException::class);
+});
+
+it('resubmits a rejected e-invoice reusing the same row', function () {
+    configureMyInvois();
+    $company = einvoiceCompany();
+    $this->actingAs(User::factory()->create(['company_id' => $company->id]));
+    $invoice = einvoiceReadyInvoice($company);
+
+    EInvoiceSubmission::create([
+        'company_id' => $company->id,
+        'invoice_id' => $invoice->id,
+        'status' => EInvoiceStatus::INVALID,
+        'error_log' => [['error' => 'Invalid TIN']],
+    ]);
+
+    Http::fake([
+        '*/connect/token' => Http::response(['access_token' => 'tok', 'expires_in' => 3600]),
+        '*/documentsubmissions' => Http::response([
+            'submissionUid' => 'SUB-R',
+            'acceptedDocuments' => [['uuid' => 'UUID-R', 'invoiceCodeNumber' => $invoice->number]],
+            'rejectedDocuments' => [],
+        ]),
+    ]);
+
+    Livewire::test(InvoiceShow::class, ['invoice' => $invoice->fresh()])
+        ->call('submitEInvoice');
+
+    expect(EInvoiceSubmission::where('invoice_id', $invoice->id)->count())->toBe(1);
+    expect($invoice->fresh()->eInvoice->status)->toBe(EInvoiceStatus::SUBMITTED);
+    expect($invoice->fresh()->eInvoice->uuid)->toBe('UUID-R');
+});
+
 it('marks a valid submission cancellable only within 72 hours', function () {
     $company = einvoiceCompany();
     $user = User::factory()->create(['company_id' => $company->id]);
     $this->actingAs($user);
 
-    $invoice = einvoiceReadyInvoice($company);
-
-    $fresh = EInvoiceSubmission::create([
-        'company_id' => $company->id,
-        'invoice_id' => $invoice->id,
+    // Unsaved instances — isCancellable() only depends on status + validated_at.
+    $fresh = new EInvoiceSubmission([
         'status' => EInvoiceStatus::VALID,
-        'uuid' => 'UUID-FRESH',
         'validated_at' => now()->subHours(1),
     ]);
-    $stale = EInvoiceSubmission::create([
-        'company_id' => $company->id,
-        'invoice_id' => $invoice->id,
+    $stale = new EInvoiceSubmission([
         'status' => EInvoiceStatus::VALID,
-        'uuid' => 'UUID-STALE',
         'validated_at' => now()->subHours(100),
     ]);
 

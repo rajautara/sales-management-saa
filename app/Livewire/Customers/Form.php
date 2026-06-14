@@ -5,8 +5,8 @@ namespace App\Livewire\Customers;
 use App\Models\Customer;
 use App\Models\PriceLevel;
 use App\Support\TenantRule;
-use Livewire\Component;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('layouts.app')]
 class Form extends Component
@@ -14,16 +14,41 @@ class Form extends Component
     public ?int $customerId = null;
 
     public string $name = '';
+
     public string $email = '';
+
     public string $phone = '';
+
     public string $billingAddress = '';
+
     public string $shippingAddress = '';
+
     public string $taxNo = '';
+
     public string $creditLimit = '0';
+
     public ?int $priceLevelId = null;
+
     public bool $isActive = true;
 
-    public function mount(Customer $customer = null): void
+    // e-Invoice (MyInvois) fields
+    public string $tin = '';
+
+    public string $registrationType = '';
+
+    public string $registrationNo = '';
+
+    public string $sstRegistrationNo = '';
+
+    public string $addressCity = '';
+
+    public string $addressPostcode = '';
+
+    public string $addressStateCode = '';
+
+    public string $addressCountryCode = 'MYS';
+
+    public function mount(?Customer $customer = null): void
     {
         if ($customer) {
             $this->customerId = $customer->id;
@@ -36,6 +61,15 @@ class Form extends Component
             $this->creditLimit = (string) $customer->credit_limit;
             $this->priceLevelId = $customer->price_level_id;
             $this->isActive = $customer->is_active;
+
+            $this->tin = $customer->tin ?? '';
+            $this->registrationType = $customer->registration_type ?? '';
+            $this->registrationNo = $customer->registration_no ?? '';
+            $this->sstRegistrationNo = $customer->sst_registration_no ?? '';
+            $this->addressCity = $customer->address_city ?? '';
+            $this->addressPostcode = $customer->address_postcode ?? '';
+            $this->addressStateCode = $customer->address_state_code ?? '';
+            $this->addressCountryCode = $customer->address_country_code ?: 'MYS';
         }
     }
 
@@ -51,6 +85,14 @@ class Form extends Component
             'creditLimit' => ['nullable', 'numeric', 'min:0'],
             'priceLevelId' => ['nullable', TenantRule::exists('price_levels')],
             'isActive' => ['boolean'],
+            'tin' => ['nullable', 'string', 'max:255'],
+            'registrationType' => ['nullable', 'string', 'max:20'],
+            'registrationNo' => ['nullable', 'string', 'max:255'],
+            'sstRegistrationNo' => ['nullable', 'string', 'max:255'],
+            'addressCity' => ['nullable', 'string', 'max:255'],
+            'addressPostcode' => ['nullable', 'string', 'max:10'],
+            'addressStateCode' => ['nullable', 'string', 'max:2'],
+            'addressCountryCode' => ['nullable', 'string', 'max:3'],
         ];
     }
 
@@ -69,6 +111,14 @@ class Form extends Component
             'credit_limit' => $validated['creditLimit'] ?? 0,
             'price_level_id' => $priceLevelId,
             'is_active' => $validated['isActive'],
+            'tin' => $validated['tin'],
+            'registration_type' => $validated['registrationType'],
+            'registration_no' => $validated['registrationNo'],
+            'sst_registration_no' => $validated['sstRegistrationNo'],
+            'address_city' => $validated['addressCity'],
+            'address_postcode' => $validated['addressPostcode'],
+            'address_state_code' => $validated['addressStateCode'],
+            'address_country_code' => $validated['addressCountryCode'] ?: 'MYS',
         ];
 
         if ($this->customerId) {
