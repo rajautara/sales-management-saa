@@ -2,21 +2,29 @@
 
 namespace App\Services\MyInvois;
 
+use App\Enums\EInvoiceStatus;
 use App\Enums\InvoiceStatus;
+use App\Models\EInvoiceSubmission;
 use App\Models\Invoice;
+use RuntimeException;
 
 /**
- * Orchestrates e-Invoice (MyInvois) operations for an Invoice.
+ * Orchestrates e-Invoice (MyInvois) operations for an Invoice: readiness
+ * validation and UBL document building (Phase 1), plus submission, status
+ * polling and cancellation against the MyInvois API (Phase 2).
  *
- * Phase 1 scope: pre-submission readiness validation and UBL document
- * building. API submission, signing and status polling are layered on top
- * in later phases via MyInvoisClient / DocumentSigner.
+ * Digital signing is a Phase 2 placeholder (DocumentSigner) — the real X.509
+ * signature lands in Phase 3.
  */
 class EInvoiceService
 {
     public function __construct(
         protected InvoiceDocumentBuilder $builder = new InvoiceDocumentBuilder,
-    ) {}
+        protected ?MyInvoisClient $client = null,
+        protected DocumentSigner $signer = new DocumentSigner,
+    ) {
+        $this->client ??= new MyInvoisClient;
+    }
 
     /**
      * Validate that an invoice has the mandatory data MyInvois requires before
@@ -89,5 +97,119 @@ class EInvoiceService
     public function buildDocument(Invoice $invoice): array
     {
         return $this->builder->build($invoice);
+    }
+
+    /**
+     * Submit an invoice to MyInvois. Validates readiness first, builds and signs
+     * the document, submits it, and records the result on an EInvoiceSubmission.
+     */
+    public function submit(Invoice $invoice): EInvoiceSubmission
+    {
+        $errors = $this->validateReadiness($invoice);
+
+        if ($errors !== []) {
+            throw new RuntimeException('Invoice is not ready for e-Invoice submission: '.implode(' ', $errors));
+        }
+
+        $document = $this->signer->sign($this->buildDocument($invoice));
+        $json = json_encode($document, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        $result = $this->client->submitDocuments([[
+            'format' => 'JSON',
+            'documentHash' => hash('sha256', $json),
+            'codeNumber' => $invoice->number,
+            'document' => base64_encode($json),
+        ]]);
+
+        $submission = EInvoiceSubmission::firstOrNew(['invoice_id' => $invoice->id]);
+        $submission->type = 'invoice';
+        $submission->submission_uid = $result['submissionUid'] ?? null;
+        $submission->document_hash = hash('sha256', $json);
+
+        $accepted = collect($result['acceptedDocuments'] ?? []);
+        $rejected = collect($result['rejectedDocuments'] ?? []);
+
+        if ($accepted->isNotEmpty()) {
+            $submission->uuid = $accepted->first()['uuid'] ?? null;
+            $submission->status = EInvoiceStatus::SUBMITTED;
+            $submission->submitted_at = now();
+            $submission->error_log = null;
+        } else {
+            $submission->status = EInvoiceStatus::INVALID;
+            $submission->error_log = $rejected->all();
+        }
+
+        $submission->save();
+
+        return $submission;
+    }
+
+    /**
+     * Poll MyInvois for the current validation status and update the submission.
+     */
+    public function refreshStatus(EInvoiceSubmission $submission): EInvoiceSubmission
+    {
+        if (blank($submission->uuid)) {
+            return $submission;
+        }
+
+        $details = $this->client->getDocumentDetails($submission->uuid);
+        $status = strtolower((string) ($details['status'] ?? ''));
+
+        $submission->long_id = $details['longId'] ?? $submission->long_id;
+
+        match ($status) {
+            'valid' => $this->markValid($submission, $details),
+            'invalid' => $this->markInvalid($submission, $details),
+            'cancelled' => $submission->status = EInvoiceStatus::CANCELLED,
+            default => $submission->status = EInvoiceStatus::SUBMITTED,
+        };
+
+        $submission->save();
+
+        return $submission;
+    }
+
+    /**
+     * Cancel a validated e-Invoice (within the 72-hour window enforced by LHDN).
+     */
+    public function cancel(EInvoiceSubmission $submission, string $reason): EInvoiceSubmission
+    {
+        if (blank($submission->uuid)) {
+            throw new RuntimeException('Cannot cancel an e-Invoice that has no UUID.');
+        }
+
+        $this->client->cancelDocument($submission->uuid, $reason);
+
+        $submission->status = EInvoiceStatus::CANCELLED;
+        $submission->cancelled_at = now();
+        $submission->cancel_reason = $reason;
+        $submission->save();
+
+        return $submission;
+    }
+
+    /**
+     * @param  array<string, mixed>  $details
+     */
+    protected function markValid(EInvoiceSubmission $submission, array $details): void
+    {
+        $submission->status = EInvoiceStatus::VALID;
+        $submission->validated_at = now();
+        $submission->long_id = $details['longId'] ?? $submission->long_id;
+
+        if (filled($submission->uuid) && filled($submission->long_id)) {
+            $submission->validation_link = $this->client->portalUrl().'/'.$submission->uuid.'/share/'.$submission->long_id;
+            $submission->qr_payload = $submission->validation_link;
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $details
+     */
+    protected function markInvalid(EInvoiceSubmission $submission, array $details): void
+    {
+        $submission->status = EInvoiceStatus::INVALID;
+        $submission->error_log = $details['validationResults'] ?? $details;
     }
 }

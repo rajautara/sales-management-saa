@@ -12,7 +12,18 @@ use App\Models\Product;
 use App\Models\User;
 use App\Services\MyInvois\EInvoiceService;
 use App\Services\MyInvois\InvoiceDocumentBuilder;
+use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
+
+function configureMyInvois(): void
+{
+    config([
+        'myinvois.enabled' => true,
+        'myinvois.environment' => 'sandbox',
+        'myinvois.client_id' => 'test-id',
+        'myinvois.client_secret' => 'test-secret',
+    ]);
+}
 
 function einvoiceCompany(array $overrides = []): Company
 {
@@ -233,6 +244,141 @@ it('saves company e-invoice fields from settings', function () {
     expect($company->tin)->toBe('C5555555555');
     expect($company->msic_code)->toBe('47190');
     expect($company->address_state_code)->toBe('10');
+});
+
+it('submits an invoice and records the returned UUID', function () {
+    configureMyInvois();
+    $company = einvoiceCompany();
+    $this->actingAs(User::factory()->create(['company_id' => $company->id]));
+    $invoice = einvoiceReadyInvoice($company);
+
+    Http::fake([
+        '*/connect/token' => Http::response(['access_token' => 'tok', 'expires_in' => 3600]),
+        '*/documentsubmissions' => Http::response([
+            'submissionUid' => 'SUB-1',
+            'acceptedDocuments' => [['uuid' => 'UUID-1', 'invoiceCodeNumber' => $invoice->number]],
+            'rejectedDocuments' => [],
+        ]),
+    ]);
+
+    $submission = app(EInvoiceService::class)->submit($invoice);
+
+    expect($submission->status)->toBe(EInvoiceStatus::SUBMITTED);
+    expect($submission->uuid)->toBe('UUID-1');
+    expect($submission->submission_uid)->toBe('SUB-1');
+    expect($invoice->fresh()->eInvoice->uuid)->toBe('UUID-1');
+});
+
+it('marks a submission invalid when MyInvois rejects it', function () {
+    configureMyInvois();
+    $company = einvoiceCompany();
+    $this->actingAs(User::factory()->create(['company_id' => $company->id]));
+    $invoice = einvoiceReadyInvoice($company);
+
+    Http::fake([
+        '*/connect/token' => Http::response(['access_token' => 'tok', 'expires_in' => 3600]),
+        '*/documentsubmissions' => Http::response([
+            'submissionUid' => 'SUB-2',
+            'acceptedDocuments' => [],
+            'rejectedDocuments' => [['error' => ['code' => 'CF321', 'message' => 'Invalid TIN']]],
+        ]),
+    ]);
+
+    $submission = app(EInvoiceService::class)->submit($invoice);
+
+    expect($submission->status)->toBe(EInvoiceStatus::INVALID);
+    expect($submission->error_log)->not->toBeNull();
+});
+
+it('refreshes status to valid and builds a validation link', function () {
+    configureMyInvois();
+    $company = einvoiceCompany();
+    $this->actingAs(User::factory()->create(['company_id' => $company->id]));
+    $invoice = einvoiceReadyInvoice($company);
+
+    $submission = EInvoiceSubmission::create([
+        'company_id' => $company->id,
+        'invoice_id' => $invoice->id,
+        'status' => EInvoiceStatus::SUBMITTED,
+        'uuid' => 'UUID-9',
+    ]);
+
+    Http::fake([
+        '*/connect/token' => Http::response(['access_token' => 'tok', 'expires_in' => 3600]),
+        '*/details' => Http::response(['status' => 'Valid', 'longId' => 'LONG-9']),
+    ]);
+
+    app(EInvoiceService::class)->refreshStatus($submission);
+    $submission->refresh();
+
+    expect($submission->status)->toBe(EInvoiceStatus::VALID);
+    expect($submission->validated_at)->not->toBeNull();
+    expect($submission->validation_link)->toContain('UUID-9')->toContain('LONG-9');
+});
+
+it('cancels a validated e-invoice with a reason', function () {
+    configureMyInvois();
+    $company = einvoiceCompany();
+    $this->actingAs(User::factory()->create(['company_id' => $company->id]));
+    $invoice = einvoiceReadyInvoice($company);
+
+    $submission = EInvoiceSubmission::create([
+        'company_id' => $company->id,
+        'invoice_id' => $invoice->id,
+        'status' => EInvoiceStatus::VALID,
+        'uuid' => 'UUID-C',
+        'validated_at' => now(),
+    ]);
+
+    Http::fake([
+        '*/connect/token' => Http::response(['access_token' => 'tok', 'expires_in' => 3600]),
+        '*/state' => Http::response([], 200),
+    ]);
+
+    app(EInvoiceService::class)->cancel($submission, 'Wrong amount');
+    $submission->refresh();
+
+    expect($submission->status)->toBe(EInvoiceStatus::CANCELLED);
+    expect($submission->cancel_reason)->toBe('Wrong amount');
+    expect($submission->cancelled_at)->not->toBeNull();
+});
+
+it('throws when submitting an invoice that is not ready', function () {
+    configureMyInvois();
+    $company = einvoiceCompany(['tin' => null]);
+    $this->actingAs(User::factory()->create(['company_id' => $company->id]));
+    $invoice = einvoiceReadyInvoice($company);
+
+    Http::fake();
+
+    expect(fn () => app(EInvoiceService::class)->submit($invoice))
+        ->toThrow(RuntimeException::class);
+
+    Http::assertNothingSent();
+});
+
+it('polls pending submissions via the scheduled command', function () {
+    configureMyInvois();
+    $company = einvoiceCompany();
+    $this->actingAs(User::factory()->create(['company_id' => $company->id]));
+    $invoice = einvoiceReadyInvoice($company);
+
+    EInvoiceSubmission::create([
+        'company_id' => $company->id,
+        'invoice_id' => $invoice->id,
+        'status' => EInvoiceStatus::SUBMITTED,
+        'uuid' => 'UUID-P',
+    ]);
+
+    Http::fake([
+        '*/connect/token' => Http::response(['access_token' => 'tok', 'expires_in' => 3600]),
+        '*/details' => Http::response(['status' => 'Valid', 'longId' => 'LONG-P']),
+    ]);
+
+    $this->artisan('einvoice:poll-status')->assertExitCode(0);
+
+    expect(EInvoiceSubmission::withoutGlobalScopes()->where('uuid', 'UUID-P')->first()->status)
+        ->toBe(EInvoiceStatus::VALID);
 });
 
 it('marks a valid submission cancellable only within 72 hours', function () {
