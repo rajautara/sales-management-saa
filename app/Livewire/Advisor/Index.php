@@ -56,7 +56,11 @@ class Index extends Component
         $this->input = '';
 
         try {
-            $answer = $advisor->chat($this->messages, $snapshots->build($this->period));
+            $answer = $advisor->streamChat(
+                $this->messages,
+                $snapshots->build($this->period),
+                fn (string $delta) => $this->stream(to: 'answer', content: $delta),
+            );
             $this->messages[] = ['role' => 'assistant', 'content' => $answer];
         } catch (\Throwable $e) {
             $this->error = $e->getMessage();

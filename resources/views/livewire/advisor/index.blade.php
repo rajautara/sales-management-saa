@@ -76,8 +76,11 @@
                         <p class="text-sm text-gray-500">Ask anything about your finances — e.g. <em>"Macam mana cashflow saya bulan ni?"</em> or <em>"Kenapa untung turun?"</em></p>
                     @endforelse
 
-                    <div wire:loading wire:target="send" class="flex justify-start">
-                        <div class="bg-gray-100 text-gray-500 rounded-lg px-3 py-2 text-sm">Thinking…</div>
+                    {{-- Live-streamed answer (cleared once the full message is appended) --}}
+                    <div wire:loading.flex wire:target="send" class="justify-start">
+                        <div class="max-w-[85%] bg-gray-100 text-gray-800 rounded-lg px-3 py-2 text-sm whitespace-pre-wrap">
+                            <span wire:stream="answer"></span><span class="animate-pulse">▍</span>
+                        </div>
                     </div>
                 </div>
 

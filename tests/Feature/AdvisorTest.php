@@ -203,17 +203,20 @@ it('appends the assistant answer when a question is sent', function () {
     $company = advisorCompany();
     $this->actingAs(advisorAdmin($company));
 
+    $sse = "data: {\"choices\":[{\"delta\":{\"content\":\"Cashflow \"}}]}\n\n"
+        ."data: {\"choices\":[{\"delta\":{\"content\":\"anda sihat.\"}}]}\n\n"
+        ."data: [DONE]\n\n";
+
     Http::fake([
-        '*/chat/completions' => Http::response([
-            'choices' => [['message' => ['content' => 'Cashflow anda sihat.']]],
-        ]),
+        '*/chat/completions' => Http::response($sse, 200, ['Content-Type' => 'text/event-stream']),
     ]);
 
     Livewire::test(Index::class)
         ->set('input', 'Macam mana cashflow saya?')
         ->call('send')
         ->assertSet('error', null)
-        ->assertCount('messages', 2);
+        ->assertCount('messages', 2)
+        ->assertSet('messages.1.content', 'Cashflow anda sihat.');
 });
 
 it('blocks staff from the advisor route', function () {

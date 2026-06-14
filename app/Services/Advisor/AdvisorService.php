@@ -36,12 +36,32 @@ class AdvisorService
      */
     public function chat(array $history, array $snapshot): string
     {
-        $messages = [
+        return $this->client->chat($this->chatMessages($history, $snapshot));
+    }
+
+    /**
+     * Streaming variant of chat(): invokes $onDelta per chunk, returns full text.
+     *
+     * @param  array<int, array{role: string, content: string}>  $history
+     * @param  array<string, mixed>  $snapshot
+     * @param  callable(string): void  $onDelta
+     */
+    public function streamChat(array $history, array $snapshot, callable $onDelta): string
+    {
+        return $this->client->streamChat($this->chatMessages($history, $snapshot), $onDelta);
+    }
+
+    /**
+     * @param  array<int, array{role: string, content: string}>  $history
+     * @param  array<string, mixed>  $snapshot
+     * @return array<int, array{role: string, content: string}>
+     */
+    protected function chatMessages(array $history, array $snapshot): array
+    {
+        return [
             ['role' => 'system', 'content' => $this->systemPrompt()."\n\n".$this->snapshotBlock($snapshot)],
             ...array_map(fn ($m) => ['role' => $m['role'], 'content' => $m['content']], $history),
         ];
-
-        return $this->client->chat($messages);
     }
 
     protected function systemPrompt(): string
