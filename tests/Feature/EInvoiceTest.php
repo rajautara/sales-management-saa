@@ -3,6 +3,7 @@
 use App\Enums\EInvoiceStatus;
 use App\Enums\InvoiceStatus;
 use App\Enums\ProductType;
+use App\Livewire\Invoices\Show as InvoiceShow;
 use App\Livewire\Settings\Index;
 use App\Models\Company;
 use App\Models\Customer;
@@ -10,10 +11,30 @@ use App\Models\EInvoiceSubmission;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\MyInvois\DocumentSigner;
 use App\Services\MyInvois\EInvoiceService;
 use App\Services\MyInvois\InvoiceDocumentBuilder;
 use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
+
+/**
+ * Create a throwaway self-signed .p12 and point config at it.
+ *
+ * @return array{0: string, 1: OpenSSLCertificate}
+ */
+function makeTestCertificate(): array
+{
+    $pkey = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+    $csr = openssl_csr_new(['commonName' => 'Test Signer', 'organizationName' => 'Acme', 'countryName' => 'MY'], $pkey);
+    $x509 = openssl_csr_sign($csr, null, $pkey, 365, ['digest_alg' => 'sha256']);
+    openssl_pkcs12_export($x509, $p12, $pkey, 'secret');
+
+    $path = tempnam(sys_get_temp_dir(), 'p12');
+    file_put_contents($path, $p12);
+    config(['myinvois.cert_path' => $path, 'myinvois.cert_password' => 'secret']);
+
+    return [$path, $x509];
+}
 
 function configureMyInvois(): void
 {
@@ -379,6 +400,116 @@ it('polls pending submissions via the scheduled command', function () {
 
     expect(EInvoiceSubmission::withoutGlobalScopes()->where('uuid', 'UUID-P')->first()->status)
         ->toBe(EInvoiceStatus::VALID);
+});
+
+it('returns the document unchanged when no certificate is configured', function () {
+    config(['myinvois.cert_path' => null]);
+
+    $doc = ['_D' => 'x', 'Invoice' => [['ID' => [['_' => 'INV-1']]]]];
+
+    expect((new DocumentSigner)->sign($doc))->toBe($doc);
+});
+
+it('applies a cryptographically valid X.509 signature', function () {
+    [$path, $x509] = makeTestCertificate();
+
+    $doc = ['_D' => 'urn:...', 'Invoice' => [['ID' => [['_' => 'INV-1']], 'DocumentCurrencyCode' => [['_' => 'MYR']]]]];
+    $canonical = json_encode($doc, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+    $signed = (new DocumentSigner)->sign($doc);
+
+    expect($signed['Invoice'][0])->toHaveKeys(['UBLExtensions', 'Signature']);
+
+    $signature = $signed['Invoice'][0]['UBLExtensions'][0]['UBLExtension'][0]['ExtensionContent'][0]['UBLDocumentSignatures'][0]['SignatureInformation'][0]['Signature'][0];
+
+    // Document digest matches the canonical document.
+    expect($signature['SignedInfo'][0]['Reference'][0]['DigestValue'][0]['_'])
+        ->toBe(base64_encode(hash('sha256', $canonical, true)));
+
+    // Signature value verifies against the certificate's public key.
+    $sig = base64_decode($signature['SignatureValue'][0]['_']);
+    expect(openssl_verify($canonical, $sig, openssl_pkey_get_public($x509), OPENSSL_ALGO_SHA256))->toBe(1);
+
+    @unlink($path);
+});
+
+it('submits an e-invoice from the invoice show screen', function () {
+    configureMyInvois();
+    $company = einvoiceCompany();
+    $this->actingAs(User::factory()->create(['company_id' => $company->id]));
+    $invoice = einvoiceReadyInvoice($company);
+
+    Http::fake([
+        '*/connect/token' => Http::response(['access_token' => 'tok', 'expires_in' => 3600]),
+        '*/documentsubmissions' => Http::response([
+            'submissionUid' => 'SUB-X',
+            'acceptedDocuments' => [['uuid' => 'UUID-X', 'invoiceCodeNumber' => $invoice->number]],
+            'rejectedDocuments' => [],
+        ]),
+    ]);
+
+    Livewire::test(InvoiceShow::class, ['invoice' => $invoice])
+        ->call('submitEInvoice');
+
+    expect($invoice->fresh()->eInvoice->uuid)->toBe('UUID-X');
+});
+
+it('shows an error and creates no submission when the invoice is not ready', function () {
+    configureMyInvois();
+    $company = einvoiceCompany(['tin' => null]);
+    $this->actingAs(User::factory()->create(['company_id' => $company->id]));
+    $invoice = einvoiceReadyInvoice($company);
+
+    Http::fake();
+
+    Livewire::test(InvoiceShow::class, ['invoice' => $invoice])
+        ->call('submitEInvoice');
+
+    expect($invoice->fresh()->eInvoice)->toBeNull();
+});
+
+it('cancels an e-invoice from the invoice show screen', function () {
+    configureMyInvois();
+    $company = einvoiceCompany();
+    $this->actingAs(User::factory()->create(['company_id' => $company->id]));
+    $invoice = einvoiceReadyInvoice($company);
+
+    EInvoiceSubmission::create([
+        'company_id' => $company->id,
+        'invoice_id' => $invoice->id,
+        'status' => EInvoiceStatus::VALID,
+        'uuid' => 'UUID-Z',
+        'validated_at' => now()->subHour(),
+    ]);
+
+    Http::fake([
+        '*/connect/token' => Http::response(['access_token' => 'tok', 'expires_in' => 3600]),
+        '*/state' => Http::response([], 200),
+    ]);
+
+    Livewire::test(InvoiceShow::class, ['invoice' => $invoice->fresh()])
+        ->set('cancelReason', 'Duplicate invoice')
+        ->call('cancelEInvoice');
+
+    expect($invoice->fresh()->eInvoice->status)->toBe(EInvoiceStatus::CANCELLED);
+});
+
+it('renders the invoice PDF with a QR code for a validated e-invoice', function () {
+    $company = einvoiceCompany();
+    $this->actingAs(User::factory()->create(['company_id' => $company->id]));
+    $invoice = einvoiceReadyInvoice($company);
+
+    EInvoiceSubmission::create([
+        'company_id' => $company->id,
+        'invoice_id' => $invoice->id,
+        'status' => EInvoiceStatus::VALID,
+        'uuid' => 'UUID-PDF',
+        'long_id' => 'LONG-PDF',
+        'validation_link' => 'https://preprod.myinvois.hasil.gov.my/UUID-PDF/share/LONG-PDF',
+        'validated_at' => now(),
+    ]);
+
+    $this->get(route('invoices.pdf', $invoice))->assertOk();
 });
 
 it('marks a valid submission cancellable only within 72 hours', function () {

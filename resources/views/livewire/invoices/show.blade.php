@@ -9,6 +9,12 @@
         </div>
     @endif
 
+    @if (session()->has('error'))
+        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {{ session('error') }}
+        </div>
+    @endif
+
     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
         <div class="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
@@ -150,4 +156,68 @@
             <p class="text-gray-500">No payments recorded.</p>
         @endif
     </div>
+
+    @if (config('myinvois.enabled'))
+        @php
+            $ei = $invoice->eInvoice;
+            $badge = match ($ei?->status?->color()) {
+                'green' => 'bg-green-100 text-green-800',
+                'red' => 'bg-red-100 text-red-800',
+                'blue' => 'bg-blue-100 text-blue-800',
+                'yellow' => 'bg-yellow-100 text-yellow-800',
+                default => 'bg-gray-100 text-gray-800',
+            };
+        @endphp
+        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">e-Invoice (MyInvois / LHDN)</h3>
+
+            @if (! $ei)
+                <p class="text-sm text-gray-500 mb-4">This invoice has not been submitted to MyInvois yet.</p>
+                <button type="button" wire:click="submitEInvoice" wire:loading.attr="disabled" wire:target="submitEInvoice"
+                    class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition disabled:opacity-50">
+                    <span wire:loading.remove wire:target="submitEInvoice">Submit to MyInvois</span>
+                    <span wire:loading wire:target="submitEInvoice">Submitting…</span>
+                </button>
+            @else
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm mb-4">
+                    <div>
+                        <span class="text-gray-500">Status:</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ml-1 {{ $badge }}">{{ $ei->status->label() }}</span>
+                    </div>
+                    @if ($ei->uuid)
+                        <div>
+                            <span class="text-gray-500">UUID:</span>
+                            <span class="font-mono text-xs text-gray-900 ml-1">{{ $ei->uuid }}</span>
+                        </div>
+                    @endif
+                    @if ($ei->validation_link)
+                        <div class="md:col-span-2">
+                            <span class="text-gray-500">Validation:</span>
+                            <a href="{{ $ei->validation_link }}" target="_blank" class="text-indigo-600 hover:text-indigo-900 ml-1 break-all">{{ $ei->validation_link }}</a>
+                        </div>
+                    @endif
+                </div>
+
+                @if ($ei->error_log)
+                    <pre class="bg-red-50 border border-red-200 text-red-700 text-xs rounded p-3 mb-4 overflow-x-auto">{{ json_encode($ei->error_log, JSON_PRETTY_PRINT) }}</pre>
+                @endif
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" wire:click="refreshEInvoiceStatus" wire:loading.attr="disabled" wire:target="refreshEInvoiceStatus"
+                        class="inline-flex items-center px-3 py-2 bg-gray-700 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition disabled:opacity-50">
+                        Check Status
+                    </button>
+
+                    @if ($ei->isCancellable())
+                        <input type="text" wire:model="cancelReason" placeholder="Cancellation reason"
+                            class="border-gray-300 focus:border-red-500 focus:ring-red-500 rounded-md shadow-sm text-sm">
+                        <button type="button" wire:click="cancelEInvoice" wire:confirm="Cancel this e-Invoice? This cannot be undone."
+                            class="inline-flex items-center px-3 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition">
+                            Cancel e-Invoice
+                        </button>
+                    @endif
+                </div>
+            @endif
+        </div>
+    @endif
 </div>
