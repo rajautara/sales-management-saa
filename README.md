@@ -13,6 +13,8 @@ This platform enables businesses to seamlessly manage customer relationships, ge
 *   **Dynamic Interactive UI**: Real-time calculated fields (subtotals, taxes, discounts) using Livewire dynamic rows and components.
 *   **Document Sequence Generator**: Collision-free document numbering sequence per company (`QT-YYYY-XXXX`, `INV-YYYY-XXXX`) powered by database-level locks (`lockForUpdate()`).
 *   **Stock Ledger Integration**: Real-time stock movements triggered automatically by Sales/Purchase fulfillment workflows (e.g., Delivery Orders, Purchase Order reception).
+*   **LHDN e-Invoice (MyInvois) Compliance**: Submit invoices to the Malaysian IRBM MyInvois system end to end — UBL 2.1 JSON mapping, X.509 digital signing, OAuth2 submission, status polling, 72-hour cancellation, and a scannable QR + UUID on validated invoice PDFs.
+*   **AI Business Advisor**: An admin-only assistant that turns an aggregated, anonymised financial snapshot into a written review and answers free-form questions — provider-agnostic (any OpenAI-compatible endpoint) with token-by-token streaming.
 
 ---
 
@@ -49,9 +51,9 @@ graph TD
 
 ---
 
-## 📦 System Modules (15 Core Components)
+## 📦 System Modules (17 Core Components)
 
-The platform is modularly built across fifteen essential business workflows:
+The platform is modularly built across seventeen essential business workflows:
 
 ### 1. 📊 Dashboard
 *   Real-time counters for monthly sales, unpaid/overdue invoice totals, pending quotations, and low-stock alerts.
@@ -116,6 +118,21 @@ The platform is modularly built across fifteen essential business workflows:
     *   **Company Profile**: Business name, registration numbers, addresses, contact details, and custom logo upload.
     *   **Document Prefixes**: Custom nomenclature for invoice, quotation, DO, and receipt running sequences.
     *   **User Directory**: Multi-user permissions managed using Spatie Role Permissions (`super-admin`, `admin`, `staff`).
+    *   **e-Invoice Profile**: Company TIN, SST registration, MSIC code, and structured address for LHDN MyInvois.
+
+### 16. 🧾 e-Invoice (LHDN MyInvois)
+*   End-to-end Malaysian e-Invoice compliance, submitted straight from the invoice screen.
+*   `InvoiceDocumentBuilder` maps an invoice to the **UBL 2.1 JSON** structure; `DocumentSigner` applies a real **XAdES-in-JSON X.509 signature** from a configured `.p12/.pfx` certificate.
+*   `MyInvoisClient` handles OAuth2 (client credentials), document submission, status lookup, and cancellation against the sandbox/production endpoints.
+*   Per-invoice actions: **Submit**, **Check Status**, **Resubmit** (after rejection), and **Cancel** (with reason, within LHDN's 72-hour window); status badge, UUID, and validation link.
+*   Validated invoices render a **scannable QR code + UUID** on the PDF. A scheduled `einvoice:poll-status` command refreshes pending submissions every 15 minutes.
+*   Compliance fields captured on companies, customers, and products (TIN, registration type/no, SST, classification/UOM/tax-type codes). Disabled by default — enable via `MYINVOIS_*` env.
+
+### 17. 🤖 AI Business Advisor
+*   Admin-only assistant that interprets the company's finances and gives actionable advice.
+*   **One-click Financial Review** (structured markdown) and a **chat panel** with token-by-token streaming, answering in the user's language (BM/English).
+*   **Privacy-first**: only an aggregated, anonymised snapshot is sent — P&L vs. previous period, receivables aging, 12-month trend, top products, expense breakdown, low-stock alerts — **never customer names or PII**.
+*   **Provider-agnostic**: any OpenAI-compatible Chat Completions endpoint (OpenAI, OpenRouter, Azure, Groq, or a local Ollama/LM Studio/vLLM server). Disabled by default — enable via `AI_*` env.
 
 ---
 
@@ -128,6 +145,9 @@ The platform is modularly built across fifteen essential business workflows:
 *   **Authentication & RBAC**: Laravel Breeze & `spatie/laravel-permission`
 *   **PDF Exporter**: `barryvdh/laravel-dompdf`
 *   **Spreadsheet Exporter**: `maatwebsite/excel`
+*   **QR Codes**: `simplesoftwareio/simple-qrcode` (e-Invoice validation QR)
+*   **e-Invoice**: LHDN MyInvois API (OAuth2 + UBL 2.1 JSON + X.509 signing)
+*   **AI**: OpenAI-compatible Chat Completions (configurable provider)
 *   **Test Framework**: Pest PHP
 
 ---
@@ -163,6 +183,26 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 *(Alternatively, you can use SQLite by setting `DB_CONNECTION=sqlite` and configuring `DB_DATABASE` to point to a `.sqlite` database file)*.
+
+#### Optional: LHDN e-Invoice (MyInvois)
+Off by default. Enable and provide your MyInvois Portal credentials plus an X.509 signing certificate:
+```env
+MYINVOIS_ENABLED=true
+MYINVOIS_ENVIRONMENT=sandbox          # sandbox (preprod) or production
+MYINVOIS_CLIENT_ID=
+MYINVOIS_CLIENT_SECRET=
+MYINVOIS_CERT_PATH=/path/to/cert.p12  # X.509 .p12/.pfx for document signing
+MYINVOIS_CERT_PASSWORD=
+```
+
+#### Optional: AI Business Advisor
+Off by default. Point it at any OpenAI-compatible Chat Completions endpoint:
+```env
+AI_ENABLED=true
+AI_API_KEY=
+AI_MODEL=gpt-4o-mini
+AI_BASE_URL=https://api.openai.com/v1 # change for OpenRouter / Azure / local
+```
 
 ### 4. Database Setup & Seeding
 Create the database and seed the default roles, a demo company, and a demo administrator:
@@ -208,3 +248,5 @@ Tests include coverage for:
 *   **Tenancy Security**: Asserting that User A (Company A) cannot read, create, update, or delete data belonging to Company B.
 *   **Document Number Service**: Ensuring lock-protected, non-overlapping sequential document numbers.
 *   **Business Operations**: End-to-end simulation of the Quotation → Sales Order → Delivery Order → Invoice → Payment → Receipt pipeline.
+*   **e-Invoice (MyInvois)**: UBL 2.1 mapping, readiness/PII/tenancy checks, sandbox submit/status/cancel (HTTP mocked), a cryptographically-verified X.509 signature, duplicate-submission guard, and PDF+QR rendering.
+*   **AI Advisor**: Aggregated snapshot accuracy, PII-free payload enforcement, and review/chat/streaming via a mocked endpoint.
