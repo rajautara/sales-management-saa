@@ -585,6 +585,28 @@ it('resubmits a rejected e-invoice reusing the same row', function () {
     expect($invoice->fresh()->eInvoice->uuid)->toBe('UUID-R');
 });
 
+it('refuses to resubmit an already-valid invoice and calls no API', function () {
+    configureMyInvois();
+    $company = einvoiceCompany();
+    $this->actingAs(User::factory()->create(['company_id' => $company->id]));
+    $invoice = einvoiceReadyInvoice($company);
+
+    EInvoiceSubmission::create([
+        'company_id' => $company->id,
+        'invoice_id' => $invoice->id,
+        'status' => EInvoiceStatus::VALID,
+        'uuid' => 'UUID-DONE',
+        'validated_at' => now(),
+    ]);
+
+    Http::fake();
+
+    expect(fn () => app(EInvoiceService::class)->submit($invoice))
+        ->toThrow(RuntimeException::class);
+
+    Http::assertNothingSent();
+});
+
 it('marks a valid submission cancellable only within 72 hours', function () {
     $company = einvoiceCompany();
     $user = User::factory()->create(['company_id' => $company->id]);

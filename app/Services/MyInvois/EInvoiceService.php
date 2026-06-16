@@ -105,6 +105,15 @@ class EInvoiceService
      */
     public function submit(Invoice $invoice): EInvoiceSubmission
     {
+        // Guard against duplicate submissions: a SUBMITTED/VALID/CANCELLED row is
+        // terminal — only a rejected (INVALID) document may be resubmitted. This
+        // prevents a second document being filed at LHDN on a double-click/race.
+        $existing = EInvoiceSubmission::firstWhere('invoice_id', $invoice->id);
+
+        if ($existing && $existing->status !== EInvoiceStatus::INVALID) {
+            throw new RuntimeException('This invoice already has an e-Invoice submission ('.$existing->status->label().'). Resubmission is only allowed after a rejection.');
+        }
+
         $errors = $this->validateReadiness($invoice);
 
         if ($errors !== []) {
@@ -113,18 +122,19 @@ class EInvoiceService
 
         $document = $this->signer->sign($this->buildDocument($invoice));
         $json = json_encode($document, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $hash = hash('sha256', $json);
 
         $result = $this->client->submitDocuments([[
             'format' => 'JSON',
-            'documentHash' => hash('sha256', $json),
+            'documentHash' => $hash,
             'codeNumber' => $invoice->number,
             'document' => base64_encode($json),
         ]]);
 
-        $submission = EInvoiceSubmission::firstOrNew(['invoice_id' => $invoice->id]);
+        $submission = $existing ?? new EInvoiceSubmission(['invoice_id' => $invoice->id]);
         $submission->type = 'invoice';
         $submission->submission_uid = $result['submissionUid'] ?? null;
-        $submission->document_hash = hash('sha256', $json);
+        $submission->document_hash = $hash;
 
         $accepted = collect($result['acceptedDocuments'] ?? []);
         $rejected = collect($result['rejectedDocuments'] ?? []);
