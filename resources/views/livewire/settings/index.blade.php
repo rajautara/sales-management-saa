@@ -149,6 +149,63 @@
             </div>
         </div>
 
+        <div class="lg:col-span-2 bg-white overflow-hidden shadow-sm sm:rounded-lg p-6 space-y-4">
+            <div>
+                <h3 class="text-lg font-medium text-gray-900">e-Invoice (MyInvois / LHDN)</h3>
+                <p class="mt-1 text-sm text-gray-500">Required to submit invoices to LHDN MyInvois. The TIN, MSIC code and structured address are mandatory for validation.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block font-medium text-sm text-gray-700">TIN (Tax Identification No)</label>
+                    <input type="text" wire:model="companyTin" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full mt-1">
+                    @error('companyTin') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="block font-medium text-sm text-gray-700">SST Registration No</label>
+                    <input type="text" wire:model="companySstRegistrationNo" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full mt-1">
+                    @error('companySstRegistrationNo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="block font-medium text-sm text-gray-700">MSIC Code</label>
+                    <input type="text" wire:model="companyMsicCode" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full mt-1">
+                    @error('companyMsicCode') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="block font-medium text-sm text-gray-700">Business Activity Description</label>
+                    <input type="text" wire:model="companyBusinessActivityDesc" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full mt-1">
+                    @error('companyBusinessActivityDesc') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="block font-medium text-sm text-gray-700">City</label>
+                    <input type="text" wire:model="companyAddressCity" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full mt-1">
+                    @error('companyAddressCity') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="block font-medium text-sm text-gray-700">Postcode</label>
+                    <input type="text" wire:model="companyAddressPostcode" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full mt-1">
+                    @error('companyAddressPostcode') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="block font-medium text-sm text-gray-700">State Code</label>
+                    <input type="text" wire:model="companyAddressStateCode" maxlength="2" placeholder="e.g. 14 = W.P. Kuala Lumpur" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full mt-1">
+                    @error('companyAddressStateCode') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="block font-medium text-sm text-gray-700">Country Code</label>
+                    <input type="text" wire:model="companyAddressCountryCode" maxlength="3" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full mt-1">
+                    @error('companyAddressCountryCode') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+            </div>
+        </div>
+
         <div class="lg:col-span-2 flex justify-end">
             <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                 Save Settings

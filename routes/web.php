@@ -78,6 +78,7 @@ Route::middleware(['auth', 'company.active'])->group(function () {
         Route::get('settings', App\Livewire\Settings\Index::class)->name('settings.index');
         Route::get('settings/users', App\Livewire\Settings\Users::class)->name('settings.users');
         Route::get('reports', App\Livewire\Reports\Index::class)->name('reports.index');
+        Route::get('advisor', App\Livewire\Advisor\Index::class)->name('advisor.index');
         Route::get('price-levels', App\Livewire\Products\PriceLevels::class)->name('price-levels.index');
         Route::get('discounts', App\Livewire\Products\Discounts::class)->name('discounts.index');
     });

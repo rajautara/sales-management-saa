@@ -216,6 +216,15 @@
                     <strong>Status:</strong> {{ $invoice->status->label() }}<br>
                     <strong>Currency:</strong> {{ $invoice->company->currency ?? 'MYR' }}
                 </div>
+                @if (! empty($einvoice) && $einvoice->isValid())
+                    <div style="margin-top: 10px; text-align: right;">
+                        @if (! empty($einvoiceQr))
+                            <img src="{{ $einvoiceQr }}" alt="e-Invoice QR" style="width: 90px; height: 90px;"><br>
+                        @endif
+                        <span style="font-size: 9px; color: #16a34a; font-weight: bold;">Validated e-Invoice</span><br>
+                        <span style="font-size: 8px; color: #64748b;">UUID: {{ $einvoice->uuid }}</span>
+                    </div>
+                @endif
             </td>
         </tr>
     </table>

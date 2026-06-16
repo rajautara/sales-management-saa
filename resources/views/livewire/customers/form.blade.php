@@ -59,6 +59,66 @@
             @error('shippingAddress') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
         </div>
 
+        <div class="border-t border-gray-200 pt-6">
+            <h3 class="text-sm font-semibold text-gray-900 mb-1">e-Invoice (MyInvois / LHDN)</h3>
+            <p class="text-xs text-gray-500 mb-4">Required to submit e-Invoices for this customer to LHDN.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block font-medium text-sm text-gray-700">TIN (Tax Identification No)</label>
+                    <input type="text" wire:model="tin" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full mt-1">
+                    @error('tin') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="block font-medium text-sm text-gray-700">Registration Type</label>
+                    <select wire:model="registrationType" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full mt-1">
+                        <option value="">—</option>
+                        <option value="BRN">BRN (Business Registration)</option>
+                        <option value="NRIC">NRIC</option>
+                        <option value="PASSPORT">Passport</option>
+                        <option value="ARMY">Army</option>
+                    </select>
+                    @error('registrationType') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="block font-medium text-sm text-gray-700">Registration No (BRN/NRIC/Passport)</label>
+                    <input type="text" wire:model="registrationNo" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full mt-1">
+                    @error('registrationNo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="block font-medium text-sm text-gray-700">SST Registration No</label>
+                    <input type="text" wire:model="sstRegistrationNo" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full mt-1">
+                    @error('sstRegistrationNo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="block font-medium text-sm text-gray-700">City</label>
+                    <input type="text" wire:model="addressCity" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full mt-1">
+                    @error('addressCity') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="block font-medium text-sm text-gray-700">Postcode</label>
+                    <input type="text" wire:model="addressPostcode" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full mt-1">
+                    @error('addressPostcode') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="block font-medium text-sm text-gray-700">State Code</label>
+                    <input type="text" wire:model="addressStateCode" maxlength="2" placeholder="e.g. 10 = Selangor" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full mt-1">
+                    @error('addressStateCode') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="block font-medium text-sm text-gray-700">Country Code</label>
+                    <input type="text" wire:model="addressCountryCode" maxlength="3" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full mt-1">
+                    @error('addressCountryCode') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+            </div>
+        </div>
+
         <div class="flex items-center">
             <input id="isActive" type="checkbox" wire:model="isActive" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
             <label for="isActive" class="ml-2 block text-sm text-gray-700">Active</label>

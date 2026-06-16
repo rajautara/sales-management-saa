@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Quotation;
-use App\Models\SalesOrder;
 use App\Models\DeliveryOrder;
 use App\Models\Invoice;
+use App\Models\Quotation;
 use App\Models\Receipt;
+use App\Models\SalesOrder;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Http\Response;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class DocumentPdfController extends Controller
 {
@@ -22,13 +22,15 @@ class DocumentPdfController extends Controller
     private function getBase64Logo($company): ?string
     {
         if ($company && $company->logo_path) {
-            $path = storage_path('app/public/' . $company->logo_path);
+            $path = storage_path('app/public/'.$company->logo_path);
             if (file_exists($path)) {
                 $type = pathinfo($path, PATHINFO_EXTENSION);
                 $data = file_get_contents($path);
-                return 'data:image/' . $type . ';base64,' . base64_encode($data);
+
+                return 'data:image/'.$type.';base64,'.base64_encode($data);
             }
         }
+
         return null;
     }
 
@@ -36,6 +38,7 @@ class DocumentPdfController extends Controller
     public function quotation(Quotation $quotation)
     {
         $this->checkCompany($quotation);
+
         return $this->generateQuotationPdf($quotation);
     }
 
@@ -48,19 +51,20 @@ class DocumentPdfController extends Controller
     {
         $quotation->load(['company', 'customer', 'items.product']);
         $logo = $this->getBase64Logo($quotation->company);
-        
+
         $pdf = Pdf::loadView('pdf.quotation', [
             'quotation' => $quotation,
             'logo' => $logo,
         ]);
-        
-        return $pdf->download('Quotation-' . $quotation->number . '.pdf');
+
+        return $pdf->download('Quotation-'.$quotation->number.'.pdf');
     }
 
     // --- Sales Order ---
     public function salesOrder(SalesOrder $salesOrder)
     {
         $this->checkCompany($salesOrder);
+
         return $this->generateSalesOrderPdf($salesOrder);
     }
 
@@ -73,19 +77,20 @@ class DocumentPdfController extends Controller
     {
         $salesOrder->load(['company', 'customer', 'items.product']);
         $logo = $this->getBase64Logo($salesOrder->company);
-        
+
         $pdf = Pdf::loadView('pdf.sales-order', [
             'salesOrder' => $salesOrder,
             'logo' => $logo,
         ]);
-        
-        return $pdf->download('SalesOrder-' . $salesOrder->number . '.pdf');
+
+        return $pdf->download('SalesOrder-'.$salesOrder->number.'.pdf');
     }
 
     // --- Delivery Order ---
     public function deliveryOrder(DeliveryOrder $deliveryOrder)
     {
         $this->checkCompany($deliveryOrder);
+
         return $this->generateDeliveryOrderPdf($deliveryOrder);
     }
 
@@ -98,19 +103,20 @@ class DocumentPdfController extends Controller
     {
         $deliveryOrder->load(['company', 'salesOrder.customer', 'items.product']);
         $logo = $this->getBase64Logo($deliveryOrder->company);
-        
+
         $pdf = Pdf::loadView('pdf.delivery-order', [
             'deliveryOrder' => $deliveryOrder,
             'logo' => $logo,
         ]);
-        
-        return $pdf->download('DeliveryOrder-' . $deliveryOrder->number . '.pdf');
+
+        return $pdf->download('DeliveryOrder-'.$deliveryOrder->number.'.pdf');
     }
 
     // --- Invoice ---
     public function invoice(Invoice $invoice)
     {
         $this->checkCompany($invoice);
+
         return $this->generateInvoicePdf($invoice);
     }
 
@@ -121,22 +127,41 @@ class DocumentPdfController extends Controller
 
     private function generateInvoicePdf(Invoice $invoice)
     {
-        $invoice->load(['company', 'customer', 'items.product', 'payments']);
+        $invoice->load(['company', 'customer', 'items.product', 'payments', 'eInvoice']);
         $logo = $this->getBase64Logo($invoice->company);
-        
+
         $pdf = Pdf::loadView('pdf.invoice', [
             'invoice' => $invoice,
             'amountDue' => $invoice->amountDue(),
             'logo' => $logo,
+            'einvoice' => $invoice->eInvoice,
+            'einvoiceQr' => $this->eInvoiceQr($invoice),
         ]);
-        
-        return $pdf->download('Invoice-' . $invoice->number . '.pdf');
+
+        return $pdf->download('Invoice-'.$invoice->number.'.pdf');
+    }
+
+    private function eInvoiceQr(Invoice $invoice): ?string
+    {
+        $ei = $invoice->eInvoice;
+
+        if (! $ei || ! $ei->isValid() || blank($ei->validation_link)) {
+            return null;
+        }
+
+        $svg = QrCode::format('svg')
+            ->size(120)
+            ->margin(0)
+            ->generate($ei->validation_link);
+
+        return 'data:image/svg+xml;base64,'.base64_encode((string) $svg);
     }
 
     // --- Receipt ---
     public function receipt(Receipt $receipt)
     {
         $this->checkCompany($receipt);
+
         return $this->generateReceiptPdf($receipt);
     }
 
@@ -149,12 +174,12 @@ class DocumentPdfController extends Controller
     {
         $receipt->load(['company', 'payment.invoice.customer', 'payment.invoice.items.product']);
         $logo = $this->getBase64Logo($receipt->company);
-        
+
         $pdf = Pdf::loadView('pdf.receipt', [
             'receipt' => $receipt,
             'logo' => $logo,
         ]);
-        
-        return $pdf->download('Receipt-' . $receipt->number . '.pdf');
+
+        return $pdf->download('Receipt-'.$receipt->number.'.pdf');
     }
 }
