@@ -70,6 +70,9 @@
                     <a href="{{ route('payments.create', $invoice) }}" wire:navigate class="inline-flex items-center px-3 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition ease-in-out duration-150">Record Payment</a>
                     <button type="button" wire:click="markVoid" class="inline-flex items-center px-3 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150">Void</button>
                 @endif
+                @if ($invoice->status === \App\Enums\InvoiceStatus::PAID)
+                    <a href="{{ route('rebates.create', $invoice) }}" wire:navigate class="inline-flex items-center px-3 py-2 bg-amber-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition ease-in-out duration-150">Beri Rebate</a>
+                @endif
             </div>
         </div>
 
@@ -154,6 +157,32 @@
             </table>
         @else
             <p class="text-gray-500">No payments recorded.</p>
+        @endif
+
+        @if ($invoice->rebates->count())
+            <h3 class="font-medium text-gray-700 mb-2 mt-6">Rebate History</h3>
+            <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
+                        <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Reference</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Notes</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach ($invoice->rebates as $rebate)
+                        <tr>
+                            <td class="px-4 py-2 text-sm text-gray-900">{{ $rebate->date->format('Y-m-d') }}</td>
+                            <td class="px-4 py-2 text-sm text-gray-500">{{ $rebate->method->label() }}</td>
+                            <td class="px-4 py-2 text-sm text-gray-500 text-right">{{ number_format($rebate->amount, 2) }}</td>
+                            <td class="px-4 py-2 text-sm text-gray-500">{{ $rebate->reference_no ?: '-' }}</td>
+                            <td class="px-4 py-2 text-sm text-gray-500">{{ $rebate->notes ?: '-' }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         @endif
     </div>
 

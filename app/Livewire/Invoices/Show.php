@@ -20,7 +20,7 @@ class Show extends Component
 
     public function mount(Invoice $invoice): void
     {
-        $this->invoice = $invoice->load(['customer', 'salesOrder', 'items.product', 'payments.receipt', 'eInvoice']);
+        $this->invoice = $invoice->load(['customer', 'salesOrder', 'items.product', 'payments.receipt', 'eInvoice', 'rebates']);
     }
 
     public function send(): void

@@ -62,6 +62,16 @@ class Invoice extends Model
         return $this->hasMany(Payment::class)->orderBy('date');
     }
 
+    public function rebates(): HasMany
+    {
+        return $this->hasMany(Rebate::class)->orderBy('date');
+    }
+
+    public function totalRebated(): float
+    {
+        return (float) $this->rebates()->sum('amount');
+    }
+
     public function eInvoice(): HasOne
     {
         return $this->hasOne(EInvoiceSubmission::class);

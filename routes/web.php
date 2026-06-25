@@ -53,6 +53,9 @@ Route::middleware(['auth', 'company.active'])->group(function () {
     Route::get('receipts', App\Livewire\Receipts\Index::class)->name('receipts.index');
     Route::get('receipts/{receipt}', App\Livewire\Receipts\Show::class)->name('receipts.show');
 
+    Route::get('rebates', App\Livewire\Rebates\Index::class)->name('rebates.index');
+    Route::get('rebates/create/{invoice}', App\Livewire\Rebates\Form::class)->name('rebates.create');
+
     // Inventory & Purchasing
     Route::get('purchase-orders', App\Livewire\PurchaseOrders\Index::class)->name('purchase-orders.index');
     Route::get('purchase-orders/create', App\Livewire\PurchaseOrders\Form::class)->name('purchase-orders.create');
