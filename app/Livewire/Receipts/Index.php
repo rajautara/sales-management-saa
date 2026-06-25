@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Receipts;
 
+use App\Livewire\Traits\WithSorting;
 use App\Models\Receipt;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
@@ -11,6 +12,7 @@ use Livewire\WithPagination;
 class Index extends Component
 {
     use WithPagination;
+    use WithSorting;
 
     public string $search = '';
 
@@ -34,7 +36,7 @@ class Index extends Component
                         });
                 });
             })
-            ->latest('date')
+            ->tap(fn ($query) => $this->applySort($query, ['date', 'number']))
             ->paginate(10);
 
         return view('livewire.receipts.index', compact('receipts'));

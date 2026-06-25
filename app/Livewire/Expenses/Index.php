@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Expenses;
 
+use App\Livewire\Traits\WithSorting;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use Livewire\Component;
@@ -12,6 +13,7 @@ use Livewire\WithPagination;
 class Index extends Component
 {
     use WithPagination;
+    use WithSorting;
 
     public string $search = '';
     public ?int $categoryId = null;
@@ -53,7 +55,7 @@ class Index extends Component
             ->when($this->categoryId, fn ($query) => $query->where('expense_category_id', $this->categoryId))
             ->when($this->dateFrom, fn ($query) => $query->whereDate('date', '>=', $this->dateFrom))
             ->when($this->dateTo, fn ($query) => $query->whereDate('date', '<=', $this->dateTo))
-            ->latest('date')
+            ->tap(fn ($query) => $this->applySort($query, ['date', 'amount']))
             ->paginate(10);
 
         return view('livewire.expenses.index', [

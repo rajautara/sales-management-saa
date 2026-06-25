@@ -3,6 +3,7 @@
 namespace App\Livewire\Quotations;
 
 use App\Enums\QuotationStatus;
+use App\Livewire\Traits\WithSorting;
 use App\Models\Quotation;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
@@ -12,6 +13,7 @@ use Livewire\WithPagination;
 class Index extends Component
 {
     use WithPagination;
+    use WithSorting;
 
     public string $search = '';
     public string $status = '';
@@ -39,7 +41,7 @@ class Index extends Component
                 });
             })
             ->when($this->status !== '', fn ($query) => $query->where('status', $this->status))
-            ->latest('date')
+            ->tap(fn ($query) => $this->applySort($query, ['date', 'number']))
             ->paginate(10);
 
         return view('livewire.quotations.index', [

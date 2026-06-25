@@ -3,6 +3,7 @@
 namespace App\Livewire\Payments;
 
 use App\Enums\PaymentMethod;
+use App\Livewire\Traits\WithSorting;
 use App\Models\Payment;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
@@ -12,6 +13,7 @@ use Livewire\WithPagination;
 class Index extends Component
 {
     use WithPagination;
+    use WithSorting;
 
     public string $search = '';
     public string $method = '';
@@ -42,7 +44,7 @@ class Index extends Component
                 });
             })
             ->when($this->method !== '', fn ($query) => $query->where('method', $this->method))
-            ->latest('date')
+            ->tap(fn ($query) => $this->applySort($query, ['date', 'amount']))
             ->paginate(10);
 
         return view('livewire.payments.index', [
