@@ -30,8 +30,9 @@ $groups = [
 ];
 @endphp
 
-<aside :class="collapsed ? 'w-20' : 'w-64'" class="bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950 text-white h-screen sticky top-0 flex flex-col border-r border-slate-800 shadow-xl transition-all duration-300">
-    <div class="h-16 flex items-center border-b border-slate-800/80 bg-slate-950/20 backdrop-blur-md" :class="collapsed ? 'justify-center px-2' : 'justify-between px-6'">
+<aside :class="{ 'lg:w-20': collapsed, 'lg:w-64': !collapsed, '!translate-x-0': mobileOpen }"
+       class="w-64 fixed inset-y-0 left-0 z-40 -translate-x-full lg:translate-x-0 lg:sticky lg:top-0 lg:z-auto bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950 text-white h-screen flex flex-col border-r border-slate-800 shadow-xl transition-all duration-300">
+    <div class="h-16 flex items-center border-b border-slate-800/80 bg-slate-950/20 backdrop-blur-md" :class="(collapsed && !mobileOpen) ? 'justify-center px-2' : 'justify-between px-6'">
         <div class="flex items-center space-x-3 min-w-0">
             @if (auth()->user()?->company?->logo_path)
                 <div class="w-8 h-8 rounded-lg overflow-hidden bg-white shadow-sm flex items-center justify-center flex-shrink-0">
@@ -44,21 +45,31 @@ $groups = [
                     </svg>
                 </div>
             @endif
-            <span x-show="!collapsed" class="font-bold text-sm tracking-tight text-white truncate max-w-[140px]" title="{{ auth()->user()?->company?->name ?? config('app.name') }}">
+            <span x-show="!collapsed || mobileOpen" class="font-bold text-sm tracking-tight text-white truncate max-w-[140px]" title="{{ auth()->user()?->company?->name ?? config('app.name') }}">
                 {{ auth()->user()?->company?->name ?? config('app.name') }}
             </span>
         </div>
+        {{-- Desktop collapse toggle --}}
         <button type="button" @click="collapsed = !collapsed" x-show="!collapsed"
-                class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/40 transition-colors flex-shrink-0"
+                class="hidden lg:block p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/40 transition-colors flex-shrink-0"
                 title="Collapse sidebar">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
             </svg>
         </button>
+        {{-- Mobile close button --}}
+        <button type="button" @click="mobileOpen = false"
+                class="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/40 transition-colors flex-shrink-0"
+                aria-label="Close menu">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
     </div>
 
-    <button type="button" @click="collapsed = !collapsed" x-show="collapsed"
-            class="mx-auto mt-2 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/40 transition-colors"
+    {{-- Desktop expand toggle (collapsed state) --}}
+    <button type="button" @click="collapsed = !collapsed" x-show="collapsed && !mobileOpen"
+            class="hidden lg:block mx-auto mt-2 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/40 transition-colors"
             title="Expand sidebar">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
@@ -74,17 +85,17 @@ $groups = [
             @endphp
             @if (count($visibleLinks) > 0)
                 <div class="space-y-1">
-                    <h4 x-show="!collapsed" class="text-[9px] uppercase font-bold tracking-widest text-slate-500 px-3 mb-2">{{ $groupTitle }}</h4>
+                    <h4 x-show="!collapsed || mobileOpen" class="text-[9px] uppercase font-bold tracking-widest text-slate-500 px-3 mb-2">{{ $groupTitle }}</h4>
                     @foreach ($visibleLinks as $link)
                         @php $active = request()->routeIs($link['route'] . '*'); @endphp
-                        <a href="{{ route($link['route']) }}" wire:navigate
-                           :class="collapsed && 'justify-center'"
+                        <a href="{{ route($link['route']) }}" wire:navigate @click="mobileOpen = false"
+                           :class="(collapsed && !mobileOpen) && 'justify-center'"
                            class="group flex items-center px-3 py-2 text-xs font-semibold rounded-lg transition-all duration-200 hover-translate-up {{ $active ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-600/15' : 'text-slate-400 hover:bg-slate-800/40 hover:text-white' }}"
                            title="{{ $link['label'] }}">
-                            <svg class="w-4 h-4 flex-shrink-0 transition-transform group-hover:scale-105 {{ $active ? 'text-white' : 'text-slate-500 group-hover:text-slate-300' }}" :class="!collapsed && 'mr-2.5'" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                            <svg class="w-4 h-4 flex-shrink-0 transition-transform group-hover:scale-105 {{ $active ? 'text-white' : 'text-slate-500 group-hover:text-slate-300' }}" :class="(!collapsed || mobileOpen) && 'mr-2.5'" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="{{ $link['icon'] }}" />
                             </svg>
-                            <span x-show="!collapsed" class="group-hover:translate-x-0.5 transition-transform">{{ $link['label'] }}</span>
+                            <span x-show="!collapsed || mobileOpen" class="group-hover:translate-x-0.5 transition-transform">{{ $link['label'] }}</span>
                         </a>
                     @endforeach
                 </div>
@@ -93,22 +104,22 @@ $groups = [
     </nav>
 
     <div class="p-4 border-t border-slate-800/80 bg-slate-950/20 backdrop-blur-md flex flex-col space-y-3">
-        <a href="{{ route('profile') }}" wire:navigate :class="collapsed && 'justify-center'" class="group flex items-center space-x-3 px-2 py-1 rounded-lg hover:bg-slate-850 transition-colors">
+        <a href="{{ route('profile') }}" wire:navigate @click="mobileOpen = false" :class="(collapsed && !mobileOpen) && 'justify-center'" class="group flex items-center space-x-3 px-2 py-1 rounded-lg hover:bg-slate-850 transition-colors">
             <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-50 to-violet-50 text-indigo-950 flex items-center justify-center font-bold text-xs shadow-md shadow-indigo-500/25 group-hover:scale-105 transition-transform flex-shrink-0">
                 {{ substr(auth()->user()?->name ?? 'U', 0, 1) }}
             </div>
-            <div x-show="!collapsed" class="flex-1 min-w-0">
+            <div x-show="!collapsed || mobileOpen" class="flex-1 min-w-0">
                 <div class="text-xs font-semibold text-white truncate group-hover:text-indigo-300 transition-colors">{{ auth()->user()?->name }}</div>
                 <div class="text-[10px] text-slate-400 truncate">{{ auth()->user()?->company?->name }}</div>
             </div>
         </a>
         <form method="POST" action="{{ route('logout') }}" class="w-full">
             @csrf
-            <button type="submit" :class="collapsed && 'justify-center'" class="flex items-center w-full px-3 py-1.5 text-[11px] font-medium text-slate-400 hover:text-rose-400 rounded-lg hover:bg-rose-500/10 transition-colors" title="Log out">
-                <svg class="w-3.5 h-3.5 flex-shrink-0" :class="!collapsed && 'mr-2'" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <button type="submit" :class="(collapsed && !mobileOpen) && 'justify-center'" class="flex items-center w-full px-3 py-1.5 text-[11px] font-medium text-slate-400 hover:text-rose-400 rounded-lg hover:bg-rose-500/10 transition-colors" title="Log out">
+                <svg class="w-3.5 h-3.5 flex-shrink-0" :class="(!collapsed || mobileOpen) && 'mr-2'" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
-                <span x-show="!collapsed">Log out</span>
+                <span x-show="!collapsed || mobileOpen">Log out</span>
             </button>
         </form>
     </div>
