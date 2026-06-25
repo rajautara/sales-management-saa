@@ -147,6 +147,31 @@
                 <textarea wire:model="invoiceTerms" rows="4" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full mt-1"></textarea>
                 @error('invoiceTerms') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>
+
+            <div class="pt-4 border-t border-gray-100">
+                <h3 class="text-base font-medium text-gray-900">Bank / Payment Details</h3>
+                <p class="mt-1 text-sm text-gray-500">Shown on invoices so customers know where to make payment.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                    <div>
+                        <label class="block font-medium text-sm text-gray-700">Bank Name</label>
+                        <input type="text" wire:model="bankName" placeholder="e.g. Maybank" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full mt-1">
+                        @error('bankName') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-sm text-gray-700">Account Name</label>
+                        <input type="text" wire:model="bankAccountName" placeholder="Account holder name" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full mt-1">
+                        @error('bankAccountName') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-sm text-gray-700">Account Number</label>
+                        <input type="text" wire:model="bankAccountNo" placeholder="e.g. 5123 4567 8901" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full mt-1">
+                        @error('bankAccountNo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="lg:col-span-2 bg-white overflow-hidden shadow-sm sm:rounded-lg p-6 space-y-4">

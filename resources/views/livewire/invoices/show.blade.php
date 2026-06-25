@@ -125,6 +125,22 @@
             </tfoot>
         </table>
 
+        @php
+            $bankName = \App\Models\Setting::get('bank_name');
+            $bankAccountName = \App\Models\Setting::get('bank_account_name');
+            $bankAccountNo = \App\Models\Setting::get('bank_account_no');
+        @endphp
+        @if ($bankName || $bankAccountNo)
+            <div class="mb-6 bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm">
+                <h3 class="font-medium text-gray-700 mb-1">Payment Details</h3>
+                <div class="text-gray-600 space-y-0.5">
+                    @if ($bankName)<div><span class="text-gray-500">Bank:</span> <span class="font-medium text-gray-900">{{ $bankName }}</span></div>@endif
+                    @if ($bankAccountName)<div><span class="text-gray-500">Account Name:</span> <span class="font-medium text-gray-900">{{ $bankAccountName }}</span></div>@endif
+                    @if ($bankAccountNo)<div><span class="text-gray-500">Account No:</span> <span class="font-medium text-gray-900">{{ $bankAccountNo }}</span></div>@endif
+                </div>
+            </div>
+        @endif
+
         <h3 class="font-medium text-gray-700 mb-2">Payment History</h3>
         @if ($invoice->payments->count())
             <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">

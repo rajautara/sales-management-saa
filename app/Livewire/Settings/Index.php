@@ -62,6 +62,12 @@ class Index extends Component
 
     public ?string $invoiceTerms = null;
 
+    public ?string $bankName = null;
+
+    public ?string $bankAccountName = null;
+
+    public ?string $bankAccountNo = null;
+
     public function mount(): void
     {
         if (! auth()->user()?->hasAnyRole(['admin', 'super-admin'])) {
@@ -97,6 +103,9 @@ class Index extends Component
         $this->receiptPrefix = (string) Setting::get('receipt_prefix', 'RC');
         $this->purchaseOrderPrefix = (string) Setting::get('purchase_order_prefix', 'PO');
         $this->invoiceTerms = Setting::get('invoice_terms', '');
+        $this->bankName = Setting::get('bank_name', '');
+        $this->bankAccountName = Setting::get('bank_account_name', '');
+        $this->bankAccountNo = Setting::get('bank_account_no', '');
     }
 
     protected function rules(): array
@@ -125,6 +134,9 @@ class Index extends Component
             'receiptPrefix' => ['nullable', 'string', 'max:50'],
             'purchaseOrderPrefix' => ['nullable', 'string', 'max:50'],
             'invoiceTerms' => ['nullable', 'string'],
+            'bankName' => ['nullable', 'string', 'max:255'],
+            'bankAccountName' => ['nullable', 'string', 'max:255'],
+            'bankAccountNo' => ['nullable', 'string', 'max:255'],
         ];
     }
 
@@ -168,6 +180,9 @@ class Index extends Component
         Setting::set('receipt_prefix', $validated['receiptPrefix']);
         Setting::set('purchase_order_prefix', $validated['purchaseOrderPrefix']);
         Setting::set('invoice_terms', $validated['invoiceTerms']);
+        Setting::set('bank_name', $validated['bankName']);
+        Setting::set('bank_account_name', $validated['bankAccountName']);
+        Setting::set('bank_account_no', $validated['bankAccountNo']);
 
         session()->flash('success', 'Settings saved successfully.');
     }

@@ -330,6 +330,29 @@
         </div>
     @endif
 
+    <!-- Payment Details -->
+    @php
+        $bankName = \App\Models\Setting::get('bank_name', null, $invoice->company_id);
+        $bankAccountName = \App\Models\Setting::get('bank_account_name', null, $invoice->company_id);
+        $bankAccountNo = \App\Models\Setting::get('bank_account_no', null, $invoice->company_id);
+    @endphp
+    @if ($bankName || $bankAccountNo)
+        <div style="margin-top: 30px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 15px;">
+            <div class="section-title">Payment Details:</div>
+            <table cellpadding="0" cellspacing="0" style="font-size: 11px; color: #334155;">
+                @if ($bankName)
+                    <tr><td style="color: #64748b; padding-right: 12px;">Bank</td><td style="font-weight: bold;">{{ $bankName }}</td></tr>
+                @endif
+                @if ($bankAccountName)
+                    <tr><td style="color: #64748b; padding-right: 12px;">Account Name</td><td style="font-weight: bold;">{{ $bankAccountName }}</td></tr>
+                @endif
+                @if ($bankAccountNo)
+                    <tr><td style="color: #64748b; padding-right: 12px;">Account No</td><td style="font-weight: bold;">{{ $bankAccountNo }}</td></tr>
+                @endif
+            </table>
+        </div>
+    @endif
+
     <!-- Notes / Terms -->
     @if ($invoice->notes)
         <div class="notes-section">

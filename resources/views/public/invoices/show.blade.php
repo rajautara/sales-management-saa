@@ -98,6 +98,28 @@
             </table>
         </div>
 
+        @php
+            $bankName = \App\Models\Setting::get('bank_name', null, $invoice->company_id);
+            $bankAccountName = \App\Models\Setting::get('bank_account_name', null, $invoice->company_id);
+            $bankAccountNo = \App\Models\Setting::get('bank_account_no', null, $invoice->company_id);
+        @endphp
+        @if ($bankName || $bankAccountNo)
+            <div class="mt-8 bg-slate-50 border border-slate-200 rounded-lg p-5 text-sm">
+                <h3 class="font-bold text-slate-900 uppercase tracking-wider text-xs mb-2">Payment Details</h3>
+                <dl class="space-y-0.5 text-slate-700">
+                    @if ($bankName)
+                        <div><dt class="inline text-slate-500">Bank:</dt> <dd class="inline font-semibold">{{ $bankName }}</dd></div>
+                    @endif
+                    @if ($bankAccountName)
+                        <div><dt class="inline text-slate-500">Account Name:</dt> <dd class="inline font-semibold">{{ $bankAccountName }}</dd></div>
+                    @endif
+                    @if ($bankAccountNo)
+                        <div><dt class="inline text-slate-500">Account No:</dt> <dd class="inline font-semibold">{{ $bankAccountNo }}</dd></div>
+                    @endif
+                </dl>
+            </div>
+        @endif
+
         @if ($invoice->notes)
             <div class="mt-8 text-sm text-slate-600 border-t border-slate-100 pt-6">
                 <span class="font-bold text-slate-700 block mb-1">Notes:</span>
