@@ -1,179 +1,150 @@
-# Sales Management System SaaS
+# Sales Management SaaS
 
-An all-in-one, multi-tenant SaaS Sales Management Platform built using the modern **Laravel 13 TALL Stack** (Laravel, Livewire 3/Volt, Alpine.js, and Tailwind CSS). 
+A multi-tenant sales management platform for Malaysian SMEs, built with Laravel 13, Livewire 3, Volt, Alpine.js, and Tailwind CSS.
 
-This platform enables businesses to seamlessly manage customer relationships, generate quotations, dispatch delivery orders, track inventory, invoice clients, record payments, and analyze financial reports.
+The application covers the daily sales workflow from customer and product setup through quotations, sales orders, delivery orders, invoices, payments, receipts, rebates, inventory movements, expenses, reporting, LHDN MyInvois e-Invoice submission, and an optional AI business advisor.
 
----
+## Highlights
 
-## ⚡ Core Highlights
+- Multi-tenant data isolation using a single database and `company_id` scoped tenant models.
+- End-to-end document workflow: quotation -> sales order -> delivery order -> invoice -> payment -> receipt.
+- Signed public document links for customers, suitable for WhatsApp or email sharing without requiring customer accounts.
+- PDF exports for quotations, sales orders, delivery orders, invoices, and receipts.
+- Per-company document numbering backed by database locks through `DocumentNumberService`.
+- Inventory stock ledger with automatic stock-out on delivered delivery orders and stock-in on received purchase orders.
+- Customer price levels, product-specific pricing, discounts, and tax-aware line calculations.
+- RBAC with `super-admin`, `admin`, and `staff` roles through Spatie Laravel Permission.
+- LHDN MyInvois integration with UBL 2.1 JSON mapping, X.509 signing, submission, polling, cancellation, UUID, and QR display.
+- Optional AI business advisor using an OpenAI-compatible Chat Completions endpoint.
 
-*   **Multi-Tenancy & Data Isolation**: Secure data boundaries using a single-database design. Every tenant's records are isolated via `company_id` global query scopes.
-*   **WhatsApp-Ready Public Sharing**: Securely share documents (Quotations, Invoices, Delivery Orders, Receipts) using cryptographically signed public URLs. External clients can view and print PDF documents without creating an account.
-*   **Dynamic Interactive UI**: Real-time calculated fields (subtotals, taxes, discounts) using Livewire dynamic rows and components.
-*   **Document Sequence Generator**: Collision-free document numbering sequence per company (`QT-YYYY-XXXX`, `INV-YYYY-XXXX`) powered by database-level locks (`lockForUpdate()`).
-*   **Stock Ledger Integration**: Real-time stock movements triggered automatically by Sales/Purchase fulfillment workflows (e.g., Delivery Orders, Purchase Order reception).
-*   **LHDN e-Invoice (MyInvois) Compliance**: Submit invoices to the Malaysian IRBM MyInvois system end to end — UBL 2.1 JSON mapping, X.509 digital signing, OAuth2 submission, status polling, 72-hour cancellation, and a scannable QR + UUID on validated invoice PDFs.
-*   **AI Business Advisor**: An admin-only assistant that turns an aggregated, anonymised financial snapshot into a written review and answers free-form questions — provider-agnostic (any OpenAI-compatible endpoint) with token-by-token streaming.
+## Tech Stack
 
----
+- PHP 8.3+
+- Laravel 13
+- Livewire 3 and Volt
+- Alpine.js
+- Tailwind CSS
+- Vite
+- MySQL 8+ or SQLite
+- Laravel Breeze authentication
+- Spatie Laravel Permission
+- DomPDF for PDF output
+- Laravel Excel for report exports
+- Simple QR Code for e-Invoice QR rendering
+- Pest PHP for tests
 
-## 🏗️ Architecture
+## Main Modules
+
+- Dashboard: monthly sales, unpaid and overdue invoice totals, pending quotations, low-stock alerts, charts, and activity feeds.
+- Customers: CRM records, billing and shipping addresses, tax details, credit limits, and price levels.
+- Products and categories: physical products and services, SKU, UOM, cost, selling price, tax settings, and stock tracking.
+- Price levels and discounts: customer-specific pricing and date-bound fixed or percentage discounts.
+- Quotations: draft, send, accept, reject, expire, and convert into sales orders.
+- Sales orders: confirmation checkpoint with one-click creation of delivery orders and invoices.
+- Delivery orders: fulfillment records that can trigger stock-out movements when delivered.
+- Invoices: credit terms, due dates, payment status tracking, e-Invoice actions, and PDF output.
+- Payments and receipts: partial payments, payment methods, receipt generation, and receipt PDFs.
+- Rebates: rebate records against fully paid invoices without reopening the invoice payment status.
+- Suppliers and purchase orders: procurement workflow and stock-in handling for received goods.
+- Inventory: stock movement ledger, stock adjustments, and product-level stock history.
+- Expenses: expense categories, payments, and receipt attachment support.
+- Reports: sales, outstanding invoices, payments, expenses, profit and loss, and exportable report data.
+- Settings: company profile, logo, document prefixes, invoice terms, users, roles, and MyInvois profile fields.
+- AI advisor: admin-only financial review and chat from aggregated, anonymised company data.
+
+## Architecture
 
 ```mermaid
 graph TD
-    subgraph Client Space
-        PublicURL[Signed Public Link] --> ClientPDF[PDF View / Download]
-    end
+    Customer[Customer / Public Viewer] --> PublicLinks[Signed Public Document Links]
+    PublicLinks --> PdfViews[HTML View and PDF Download]
 
-    subgraph App Layer [TALL Stack]
-        Livewire[Livewire 3 & Volt] --> Controllers[Document Controllers]
-        Livewire --> Services[Services Layer]
-    end
+    User[Authenticated User] --> Livewire[Livewire 3 / Volt UI]
+    Livewire --> Services[Application Services]
+    Services --> Models[Tenant Models]
+    Models --> Scope[BelongsToCompany Global Scope]
+    Scope --> Database[(MySQL or SQLite)]
 
-    subgraph Services Layer
-        DocService[DocumentNumberService]
-        StockService[StockService]
-        PricingService[PricingService]
-    end
-
-    subgraph Model & Tenancy
-        GlobalScope[BelongsToCompany Scope] --> TenantModels[Tenant Models]
-    end
-
-    subgraph Data Layer
-        TenantModels --> DB[(MySQL / SQLite)]
-    end
-
-    ClientURL[WhatsApp / Email Share] -.-> PublicURL
-    Services --> TenantModels
+    Services --> DocumentNumbers[DocumentNumberService]
+    Services --> Pricing[PricingService]
+    Services --> Stock[StockService]
+    Services --> MyInvois[EInvoiceService / MyInvois API]
+    Services --> Advisor[AI Advisor Services]
 ```
 
----
+## Requirements
 
-## 📦 System Modules (17 Core Components)
+- PHP 8.3 or newer
+- Composer
+- Node.js and npm
+- SQLite for local development, or MySQL 8+ for shared/staging/production environments
 
-The platform is modularly built across seventeen essential business workflows:
+The repository also includes a `tools/` directory for environments that use packaged binaries.
 
-### 1. 📊 Dashboard
-*   Real-time counters for monthly sales, unpaid/overdue invoice totals, pending quotations, and low-stock alerts.
-*   Interactive charts visualising 12-month sales pipelines.
-*   Activity feeds detailing recent company transactions.
+## Local Setup
 
-### 2. 👥 Customers
-*   Full CRM profiles with separate billing/shipping addresses, tax numbers, and status toggles.
-*   Unique credit limits per customer to manage risk.
-*   Associated price levels for automatic pricing rules.
+Install PHP and Node dependencies:
 
-### 3. 🛍️ Products & Services
-*   Unified catalog listing physical inventory items and digital services.
-*   Configuration options for SKU, category, units of measure, cost, sell price, tax rates, and stock-tracking flags.
-
-### 4. 🏷️ Price Levels & Discounts
-*   Custom customer price levels (e.g., Retail, Wholesale, VIP) with custom selling prices.
-*   Global or category-specific discounts (percentage or fixed-amount) with date ranges.
-
-### 5. 📄 Quotations
-*   Live constructor: Dynamic row updates recalculating subtotals, tax rates, discounts, and totals on-the-fly.
-*   Status tracking (`Draft`, `Sent`, `Accepted`, `Rejected`, `Expired`).
-*   One-click conversion into a **Sales Order**.
-
-### 6. 🛒 Sales Orders
-*   Intermediary verification checkpoint converted from accepted quotations or built manually.
-*   One-click generation of related **Delivery Orders** and **Invoices**.
-
-### 7. 🚚 Delivery Orders
-*   Fulfillment orders tracking items ready to be shipped.
-*   Transitioning a DO to `Delivered` triggers an automatic `Stock OUT` movement in the inventory ledger.
-
-### 8. 💳 Invoices
-*   Comprehensive invoice generator with user-defined credit terms and due dates.
-*   Automated billing state tracking: `Draft`, `Sent`, `Partially Paid`, `Paid`, `Overdue`, and `Void`.
-
-### 9. 💵 Payments
-*   Register cash, bank transfers, e-wallets, cards, or cheque payments against invoices.
-*   Supports multiple partial payments, auto-updating the parent invoice state.
-
-### 10. 🧾 Receipts
-*   Auto-generated payment receipts immediately following payment records.
-*   Unique receipt transaction numbers (`RC-YYYY-XXXX`) with downloadable customer PDFs.
-
-### 11. 🏢 Suppliers
-*   Profiles containing registration info, tax numbers, and contact details for procurement.
-
-### 12. 📥 Purchase Orders
-*   Procurement pipeline mapping orders sent to suppliers.
-*   Completing/receiving goods automatically issues a `Stock IN` record in the inventory.
-
-### 13. 📦 Inventory / Stock
-*   Real-time stock ledger logging movements (`IN`, `OUT`, `Adjustment`) and tracking average cost history.
-*   Manual stock adjustments (stocktakes) and threshold warning logs for low-running stock.
-
-### 14. 💸 Expenses
-*   Customizable expense categories.
-*   Payment logs tracking operational expenses with receipt file attachments.
-
-### 15. ⚙️ Settings
-*   Comprehensive tenant control center:
-    *   **Company Profile**: Business name, registration numbers, addresses, contact details, and custom logo upload.
-    *   **Document Prefixes**: Custom nomenclature for invoice, quotation, DO, and receipt running sequences.
-    *   **User Directory**: Multi-user permissions managed using Spatie Role Permissions (`super-admin`, `admin`, `staff`).
-    *   **e-Invoice Profile**: Company TIN, SST registration, MSIC code, and structured address for LHDN MyInvois.
-
-### 16. 🧾 e-Invoice (LHDN MyInvois)
-*   End-to-end Malaysian e-Invoice compliance, submitted straight from the invoice screen.
-*   `InvoiceDocumentBuilder` maps an invoice to the **UBL 2.1 JSON** structure; `DocumentSigner` applies a real **XAdES-in-JSON X.509 signature** from a configured `.p12/.pfx` certificate.
-*   `MyInvoisClient` handles OAuth2 (client credentials), document submission, status lookup, and cancellation against the sandbox/production endpoints.
-*   Per-invoice actions: **Submit**, **Check Status**, **Resubmit** (after rejection), and **Cancel** (with reason, within LHDN's 72-hour window); status badge, UUID, and validation link.
-*   Validated invoices render a **scannable QR code + UUID** on the PDF. A scheduled `einvoice:poll-status` command refreshes pending submissions every 15 minutes.
-*   Compliance fields captured on companies, customers, and products (TIN, registration type/no, SST, classification/UOM/tax-type codes). Disabled by default — enable via `MYINVOIS_*` env.
-
-### 17. 🤖 AI Business Advisor
-*   Admin-only assistant that interprets the company's finances and gives actionable advice.
-*   **One-click Financial Review** (structured markdown) and a **chat panel** with token-by-token streaming, answering in the user's language (BM/English).
-*   **Privacy-first**: only an aggregated, anonymised snapshot is sent — P&L vs. previous period, receivables aging, 12-month trend, top products, expense breakdown, low-stock alerts — **never customer names or PII**.
-*   **Provider-agnostic**: any OpenAI-compatible Chat Completions endpoint (OpenAI, OpenRouter, Azure, Groq, or a local Ollama/LM Studio/vLLM server). Disabled by default — enable via `AI_*` env.
-
----
-
-## 🛠️ Technology Stack
-
-*   **Backend Framework**: Laravel 13 (PHP 8.3+)
-*   **Frontend Components**: Livewire 3 (Volt), Alpine.js
-*   **Styling Engine**: Tailwind CSS 4
-*   **Database Systems**: MySQL 8+ (SQLite for dev/testing environments)
-*   **Authentication & RBAC**: Laravel Breeze & `spatie/laravel-permission`
-*   **PDF Exporter**: `barryvdh/laravel-dompdf`
-*   **Spreadsheet Exporter**: `maatwebsite/excel`
-*   **QR Codes**: `simplesoftwareio/simple-qrcode` (e-Invoice validation QR)
-*   **e-Invoice**: LHDN MyInvois API (OAuth2 + UBL 2.1 JSON + X.509 signing)
-*   **AI**: OpenAI-compatible Chat Completions (configurable provider)
-*   **Test Framework**: Pest PHP
-
----
-
-## ⚙️ Local Development Setup
-
-Follow these instructions to run the application locally:
-
-### 1. Prerequisites
-Ensure you have PHP 8.3+, Composer, and Node.js installed. Alternatively, you can use the pre-packaged binaries included in the `tools/` directory.
-
-### 2. Clone and Install Dependencies
-Install PHP libraries and Node packages:
 ```bash
 composer install
 npm install
 ```
 
-### 3. Environment Configuration
-Copy the environment variables and generate an application key:
+Create the environment file and application key:
+
 ```bash
 cp .env.example .env
 php artisan key:generate
 ```
 
-Configure your `.env` database parameters:
+For SQLite development, create the local database file if it does not already exist:
+
+```bash
+touch database/database.sqlite
+```
+
+Then run migrations and seed the demo company, roles, and admin user:
+
+```bash
+php artisan migrate --seed
+```
+
+Default seeded login:
+
+- Email: `admin@example.com`
+- Password: `password`
+
+## Running Locally
+
+Start the full development stack with Laravel, queue worker, log tailing, and Vite:
+
+```bash
+composer run dev
+```
+
+Or run Laravel and Vite in separate terminals:
+
+```bash
+php artisan serve
+npm run dev
+```
+
+Build production assets:
+
+```bash
+npm run build
+```
+
+## Environment Configuration
+
+The default `.env.example` uses SQLite:
+
+```env
+DB_CONNECTION=sqlite
+```
+
+For MySQL:
+
 ```env
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -182,71 +153,113 @@ DB_DATABASE=sales_management_db
 DB_USERNAME=root
 DB_PASSWORD=
 ```
-*(Alternatively, you can use SQLite by setting `DB_CONNECTION=sqlite` and configuring `DB_DATABASE` to point to a `.sqlite` database file)*.
 
-#### Optional: LHDN e-Invoice (MyInvois)
-Off by default. Enable and provide your MyInvois Portal credentials plus an X.509 signing certificate:
+Queues and scheduled jobs are database-backed by default:
+
+```env
+QUEUE_CONNECTION=database
+CACHE_STORE=database
+SESSION_DRIVER=database
+```
+
+## Optional LHDN MyInvois e-Invoice
+
+MyInvois is disabled by default. Enable it only after company, customer, and product compliance fields are configured.
+
 ```env
 MYINVOIS_ENABLED=true
-MYINVOIS_ENVIRONMENT=sandbox          # sandbox (preprod) or production
+MYINVOIS_ENVIRONMENT=sandbox
 MYINVOIS_CLIENT_ID=
 MYINVOIS_CLIENT_SECRET=
-MYINVOIS_CERT_PATH=/path/to/cert.p12  # X.509 .p12/.pfx for document signing
+MYINVOIS_CERT_PATH=/absolute/path/to/cert.p12
 MYINVOIS_CERT_PASSWORD=
+MYINVOIS_TIMEOUT=30
 ```
 
-#### Optional: AI Business Advisor
-Off by default. Point it at any OpenAI-compatible Chat Completions endpoint:
+Supported invoice actions include readiness validation, submit, check status, resubmit after rejection, and cancel with a reason when allowed by MyInvois.
+
+## Optional AI Business Advisor
+
+The advisor is disabled by default and uses an OpenAI-compatible Chat Completions endpoint.
+
 ```env
 AI_ENABLED=true
+AI_BASE_URL=https://api.openai.com/v1
 AI_API_KEY=
 AI_MODEL=gpt-4o-mini
-AI_BASE_URL=https://api.openai.com/v1 # change for OpenRouter / Azure / local
+AI_TIMEOUT=60
+AI_MAX_TOKENS=1500
+AI_TEMPERATURE=0.3
+AI_USE_TOOLS=false
 ```
 
-### 4. Database Setup & Seeding
-Create the database and seed the default roles, a demo company, and a demo administrator:
+The advisor sends aggregated, anonymised financial data, not customer names or other PII.
+
+## Scheduled Commands
+
+Laravel scheduling is configured in `routes/console.php`.
+
+- `invoices:check-overdue` runs daily and marks eligible invoices as overdue.
+- `einvoice:poll-status` runs every 15 minutes and refreshes submitted MyInvois documents when MyInvois is enabled.
+
+In production, run the Laravel scheduler:
+
 ```bash
-php artisan migrate --seed
+php artisan schedule:run
 ```
 
-The seeder creates a default administrator account:
-*   **User Email**: `admin@example.com`
-*   **Password**: `password`
+For normal production operation, also run a queue worker:
 
-### 5. Running the Application
-Run the local Laravel development server and build assets:
 ```bash
-# Start local PHP server & Vite bundler
-npm run dev
+php artisan queue:work
 ```
 
-If you are using the pre-packaged PHP binaries located in `tools/php/`:
+## Testing
+
+Run the test suite:
+
 ```bash
-# Start serving using local php binary
-tools/php/php.exe artisan serve
-```
-
----
-
-## 🧪 Testing Suite
-
-We use **Pest PHP** to enforce robust tenant isolation and business logic validation.
-
-To run the automated tests:
-```bash
-# Run unit and feature test suites
 php artisan test
 ```
 
-Using the pre-packaged PHP binary:
+Or through Composer:
+
 ```bash
-tools/php/php.exe artisan test
+composer test
 ```
 
-Tests include coverage for:
-*   **Tenancy Security**: Asserting that User A (Company A) cannot read, create, update, or delete data belonging to Company B.
-*   **Document Number Service**: Ensuring lock-protected, non-overlapping sequential document numbers.
-*   **Business Operations**: End-to-end simulation of the Quotation → Sales Order → Delivery Order → Invoice → Payment → Receipt pipeline.
-*   **e-Invoice (MyInvois)**: UBL 2.1 mapping, readiness/PII/tenancy checks, sandbox submit/status/cancel (HTTP mocked), a cryptographically-verified X.509 signature, duplicate-submission guard, and PDF+QR rendering.
-*   **AI Advisor**: Aggregated snapshot accuracy, PII-free payload enforcement, and review/chat/streaming via a mocked endpoint.
+Current test coverage includes:
+
+- Authentication and profile flows.
+- Tenant isolation and company-scoped data access.
+- Sales workflow smoke coverage.
+- MyInvois mapping, signing, submission, status, cancellation, and PDF/QR behavior with mocked HTTP.
+- AI advisor snapshot, PII guardrails, review, chat, and streaming behavior with mocked responses.
+
+## Useful Paths
+
+- `routes/web.php` - authenticated application routes and signed public document routes.
+- `routes/console.php` - scheduled commands.
+- `app/Livewire` - Livewire screens and workflows.
+- `app/Models` - tenant models and business records.
+- `app/Services` - document numbering, pricing, stock, MyInvois, and advisor services.
+- `resources/views/pdf` - PDF templates.
+- `resources/views/public` - public document views.
+- `database/migrations` - database schema.
+- `tests/Feature` - feature and integration tests.
+
+## Deployment Notes
+
+For a typical production deployment:
+
+```bash
+composer install --no-dev --optimize-autoloader
+npm ci
+npm run build
+php artisan migrate --force
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+Ensure writable permissions for `storage/` and `bootstrap/cache/`, configure a queue worker, and run Laravel's scheduler once per minute from cron.
