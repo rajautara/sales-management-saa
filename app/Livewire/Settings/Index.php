@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Settings;
 
+use App\Livewire\Traits\AuthorizesAdmin;
 use App\Models\Company;
 use App\Models\Setting;
 use Livewire\Attributes\Layout;
@@ -11,6 +12,7 @@ use Livewire\WithFileUploads;
 #[Layout('layouts.app')]
 class Index extends Component
 {
+    use AuthorizesAdmin;
     use WithFileUploads;
 
     public string $companyName = '';
@@ -70,10 +72,6 @@ class Index extends Component
 
     public function mount(): void
     {
-        if (! auth()->user()?->hasAnyRole(['admin', 'super-admin'])) {
-            abort(403);
-        }
-
         $company = auth()->user()?->company;
 
         if ($company instanceof Company) {

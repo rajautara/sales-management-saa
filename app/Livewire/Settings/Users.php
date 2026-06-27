@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Settings;
 
+use App\Livewire\Traits\AuthorizesAdmin;
 use App\Models\User;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
@@ -10,6 +11,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class Users extends Component
 {
+    use AuthorizesAdmin;
     use WithPagination;
 
     public string $name = '';
@@ -18,13 +20,6 @@ class Users extends Component
     public string $role = 'staff';
 
     public ?int $editingUserId = null;
-
-    public function mount(): void
-    {
-        if (! auth()->user()?->hasAnyRole(['admin', 'super-admin'])) {
-            abort(403);
-        }
-    }
 
     protected function rules(): array
     {

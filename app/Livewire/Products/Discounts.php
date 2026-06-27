@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Products;
 
+use App\Livewire\Traits\AuthorizesAdmin;
 use App\Models\Discount;
 use App\Models\Product;
 use App\Support\TenantRule;
@@ -11,6 +12,8 @@ use Livewire\Attributes\Layout;
 #[Layout('layouts.app')]
 class Discounts extends Component
 {
+    use AuthorizesAdmin;
+
     public ?int $editingId = null;
 
     public string $name = '';
@@ -21,13 +24,6 @@ class Discounts extends Component
     public ?string $startDate = null;
     public ?string $endDate = null;
     public bool $isActive = true;
-
-    public function mount(): void
-    {
-        if (! auth()->user()?->hasAnyRole(['admin', 'super-admin'])) {
-            abort(403);
-        }
-    }
 
     protected function rules(): array
     {

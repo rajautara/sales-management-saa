@@ -9,6 +9,7 @@ use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Livewire\Traits\AuthorizesAdmin;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
@@ -16,6 +17,8 @@ use Livewire\Attributes\Layout;
 #[Layout('layouts.app')]
 class Index extends Component
 {
+    use AuthorizesAdmin;
+
     public string $reportType = 'sales';
     public string $dateFrom = '';
     public string $dateTo = '';
@@ -24,10 +27,6 @@ class Index extends Component
 
     public function mount(): void
     {
-        if (! auth()->user()?->hasAnyRole(['admin', 'super-admin'])) {
-            abort(403);
-        }
-
         $this->dateFrom = now()->startOfMonth()->format('Y-m-d');
         $this->dateTo = now()->endOfMonth()->format('Y-m-d');
     }

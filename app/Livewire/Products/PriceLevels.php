@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Products;
 
+use App\Livewire\Traits\AuthorizesAdmin;
 use App\Models\PriceLevel;
 use App\Models\Product;
 use App\Models\ProductPrice;
@@ -13,6 +14,8 @@ use Livewire\Attributes\Layout;
 #[Layout('layouts.app')]
 class PriceLevels extends Component
 {
+    use AuthorizesAdmin;
+
     public ?int $editingId = null;
     public string $name = '';
     public string $description = '';
@@ -23,10 +26,6 @@ class PriceLevels extends Component
 
     public function mount(): void
     {
-        if (! auth()->user()?->hasAnyRole(['admin', 'super-admin'])) {
-            abort(403);
-        }
-
         ProductPrice::with('product')->get()->each(function (ProductPrice $productPrice) {
             $this->editPrices[$productPrice->id] = (string) $productPrice->price;
         });

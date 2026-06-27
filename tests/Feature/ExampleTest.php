@@ -102,14 +102,52 @@ test('guest can access public signed invoice route with correct signature', func
     $this->get(route('public.invoices.show', $invoice))
         ->assertStatus(403);
 
-    // 2. Assert that access with a valid signature is successful and displays the invoice details
-    $signedUrl = URL::signedRoute('public.invoices.show', $invoice);
+    // 2. Assert that access with a valid temporary signature is successful and displays the invoice details
+    $signedUrl = URL::temporarySignedRoute('public.invoices.show', now()->addDays(7), $invoice);
 
     $this->get($signedUrl)
         ->assertOk()
         ->assertSee('INV-2026-001')
         ->assertSee('Daun Hijau Food House')
         ->assertSee('471.80');
+
+    // 3. Assert that the link expires — access after the TTL aborts with 403
+    $this->travel(8)->days();
+    $this->get($signedUrl)->assertStatus(403);
+    $this->travelBack();
+});
+
+test('public document route returns 404 when the company is disabled', function () {
+    $this->seed(DatabaseSeeder::class);
+    $user = User::where('email', 'admin@example.com')->first();
+    $this->actingAs($user);
+
+    $customer = Customer::create([
+        'company_id' => $user->company_id,
+        'name' => 'Daun Hijau Food House',
+        'is_active' => true,
+    ]);
+
+    $invoice = \App\Models\Invoice::create([
+        'company_id' => $user->company_id,
+        'customer_id' => $customer->id,
+        'number' => 'INV-2026-009',
+        'date' => now()->format('Y-m-d'),
+        'due_date' => now()->addDays(7)->format('Y-m-d'),
+        'status' => \App\Enums\InvoiceStatus::DRAFT,
+        'subtotal' => 100.00,
+        'discount' => 0.00,
+        'tax' => 0.00,
+        'total' => 100.00,
+    ]);
+
+    $signedUrl = URL::temporarySignedRoute('public.invoices.show', now()->addDays(7), $invoice);
+
+    // Disable the company, then access the validly-signed public link as a guest.
+    $user->company->update(['is_active' => false]);
+    Auth::logout();
+
+    $this->get($signedUrl)->assertStatus(404);
 });
 
 test('whatsapp link contains correct text and number', function () {
@@ -199,6 +237,28 @@ test('admin user can create, edit, and delete users in settings', function () {
     Livewire::test(App\Livewire\Settings\Users::class)
         ->call('delete', $admin->id)
         ->assertSee('You cannot delete yourself.');
+});
+
+test('staff user cannot reach admin-only livewire components', function () {
+    $this->seed(DatabaseSeeder::class);
+    $admin = User::where('email', 'admin@example.com')->first();
+
+    $staff = User::create([
+        'name' => 'Plain Staff',
+        'email' => 'plainstaff@example.com',
+        'password' => 'secret123',
+        'company_id' => $admin->company_id,
+    ]);
+    $staff->assignRole('staff');
+    $this->actingAs($staff);
+
+    // The AuthorizesAdmin boot hook runs on every request (not just mount) and
+    // aborts 403 — so the component itself blocks staff, independent of the
+    // route-level role middleware.
+    Livewire::test(App\Livewire\Settings\Users::class)->assertForbidden();
+    Livewire::test(App\Livewire\Products\Discounts::class)->assertForbidden();
+    Livewire::test(App\Livewire\Products\PriceLevels::class)->assertForbidden();
+    Livewire::test(App\Livewire\Reports\Index::class)->assertForbidden();
 });
 
 test('admin user can upload company logo and change company profile in settings', function () {

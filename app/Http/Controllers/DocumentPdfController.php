@@ -19,6 +19,15 @@ class DocumentPdfController extends Controller
         }
     }
 
+    /**
+     * Public PDF routes are unauthenticated (guarded only by the signed URL).
+     * As defence in depth, refuse to render documents for disabled companies.
+     */
+    private function ensureCompanyActive($model): void
+    {
+        abort_unless($model->company?->is_active, 404);
+    }
+
     private function getBase64Logo($company): ?string
     {
         if ($company && $company->logo_path) {
@@ -44,6 +53,8 @@ class DocumentPdfController extends Controller
 
     public function quotationPublic(Quotation $quotation)
     {
+        $this->ensureCompanyActive($quotation);
+
         return $this->generateQuotationPdf($quotation);
     }
 
@@ -70,6 +81,8 @@ class DocumentPdfController extends Controller
 
     public function salesOrderPublic(SalesOrder $salesOrder)
     {
+        $this->ensureCompanyActive($salesOrder);
+
         return $this->generateSalesOrderPdf($salesOrder);
     }
 
@@ -96,6 +109,8 @@ class DocumentPdfController extends Controller
 
     public function deliveryOrderPublic(DeliveryOrder $deliveryOrder)
     {
+        $this->ensureCompanyActive($deliveryOrder);
+
         return $this->generateDeliveryOrderPdf($deliveryOrder);
     }
 
@@ -122,6 +137,8 @@ class DocumentPdfController extends Controller
 
     public function invoicePublic(Invoice $invoice)
     {
+        $this->ensureCompanyActive($invoice);
+
         return $this->generateInvoicePdf($invoice);
     }
 
@@ -167,6 +184,8 @@ class DocumentPdfController extends Controller
 
     public function receiptPublic(Receipt $receipt)
     {
+        $this->ensureCompanyActive($receipt);
+
         return $this->generateReceiptPdf($receipt);
     }
 
