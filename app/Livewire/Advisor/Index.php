@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Advisor;
 
+use App\Livewire\Traits\AuthorizesAdmin;
 use App\Services\Advisor\AdvisorService;
 use App\Services\Advisor\FinancialSnapshotService;
 use Livewire\Attributes\Layout;
@@ -10,6 +11,8 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class Index extends Component
 {
+    use AuthorizesAdmin;
+
     public string $period = 'this_month';
 
     public string $input = '';
@@ -20,13 +23,6 @@ class Index extends Component
     public string $review = '';
 
     public ?string $error = null;
-
-    public function mount(): void
-    {
-        if (! auth()->user()?->hasAnyRole(['admin', 'super-admin'])) {
-            abort(403);
-        }
-    }
 
     public function generateReview(
         FinancialSnapshotService $snapshots,

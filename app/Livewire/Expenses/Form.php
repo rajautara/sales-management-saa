@@ -49,7 +49,7 @@ class Form extends Component
             'supplierId' => ['nullable', TenantRule::exists('suppliers')],
             'description' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0.01'],
-            'receipt' => ['nullable', 'file', 'max:5120'],
+            'receipt' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'],
         ];
     }
 
@@ -62,10 +62,20 @@ class Form extends Component
         $path = $this->existingReceipt;
 
         if ($this->receipt) {
-            if ($this->existingReceipt && Storage::disk('public')->exists($this->existingReceipt)) {
-                Storage::disk('public')->delete($this->existingReceipt);
+            if ($this->existingReceipt) {
+                // Remove the previous file from whichever disk it lives on.
+                // Receipts created before this change are still on the legacy
+                // 'public' disk; deleting only from 'local' would leave them
+                // orphaned and publicly reachable.
+                foreach (['local', 'public'] as $disk) {
+                    if (Storage::disk($disk)->exists($this->existingReceipt)) {
+                        Storage::disk($disk)->delete($this->existingReceipt);
+                    }
+                }
             }
-            $path = $this->receipt->store('expenses', 'public');
+            // Stored on the private 'local' disk; served only through the
+            // authenticated, company-scoped ExpenseReceiptController.
+            $path = $this->receipt->store('expenses', 'local');
         }
 
         $data = [

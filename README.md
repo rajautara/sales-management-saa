@@ -263,3 +263,17 @@ php artisan view:cache
 ```
 
 Ensure writable permissions for `storage/` and `bootstrap/cache/`, configure a queue worker, and run Laravel's scheduler once per minute from cron.
+
+To audit and fix file/folder permissions (writable dirs, secret lockdown for
+`.env`/keys/certs, and a world-writable scan), run the bundled tool. It fixes
+problems by default; pass `--dry-run` to report only (non-zero exit if issues
+are found, so it works as a CI check):
+
+```bash
+php artisan security:permissions            # or: composer perms
+php artisan security:permissions --dry-run
+
+# Or, without booting Laravel (e.g. before install, on a broken deploy):
+tools/check-permissions.sh
+tools/check-permissions.sh --dry-run
+```

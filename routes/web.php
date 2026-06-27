@@ -67,6 +67,7 @@ Route::middleware(['auth', 'company.active'])->group(function () {
     Route::get('expenses', App\Livewire\Expenses\Index::class)->name('expenses.index');
     Route::get('expenses/create', App\Livewire\Expenses\Form::class)->name('expenses.create');
     Route::get('expenses/{expense}/edit', App\Livewire\Expenses\Form::class)->name('expenses.edit');
+    Route::get('expenses/{expense}/receipt', [App\Http\Controllers\ExpenseReceiptController::class, 'show'])->name('expenses.receipt');
     Route::get('expense-categories', App\Livewire\Expenses\Categories::class)->name('expense-categories.index');
 
     // Document PDF Export Routes

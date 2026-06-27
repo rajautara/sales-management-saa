@@ -55,7 +55,7 @@
             @if ($existingReceipt)
                 <p class="mt-2 text-sm text-gray-600">
                     Current receipt:
-                    <a href="{{ Storage::url($existingReceipt) }}" target="_blank" class="text-indigo-600 hover:text-indigo-900">View</a>
+                    <a href="{{ route('expenses.receipt', $expenseId) }}" target="_blank" class="text-indigo-600 hover:text-indigo-900">View</a>
                 </p>
             @endif
         </div>

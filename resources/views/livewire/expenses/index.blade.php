@@ -70,7 +70,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{{ number_format($expense->amount, 2) }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
                             @if ($expense->receipt_attachment)
-                                <a href="{{ Storage::url($expense->receipt_attachment) }}" target="_blank" class="text-indigo-600 hover:text-indigo-900">View</a>
+                                <a href="{{ route('expenses.receipt', $expense) }}" target="_blank" class="text-indigo-600 hover:text-indigo-900">View</a>
                             @else
                                 -
                             @endif
