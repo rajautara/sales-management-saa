@@ -62,8 +62,16 @@ class Form extends Component
         $path = $this->existingReceipt;
 
         if ($this->receipt) {
-            if ($this->existingReceipt && Storage::disk('local')->exists($this->existingReceipt)) {
-                Storage::disk('local')->delete($this->existingReceipt);
+            if ($this->existingReceipt) {
+                // Remove the previous file from whichever disk it lives on.
+                // Receipts created before this change are still on the legacy
+                // 'public' disk; deleting only from 'local' would leave them
+                // orphaned and publicly reachable.
+                foreach (['local', 'public'] as $disk) {
+                    if (Storage::disk($disk)->exists($this->existingReceipt)) {
+                        Storage::disk($disk)->delete($this->existingReceipt);
+                    }
+                }
             }
             // Stored on the private 'local' disk; served only through the
             // authenticated, company-scoped ExpenseReceiptController.

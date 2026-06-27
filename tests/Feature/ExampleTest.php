@@ -312,3 +312,46 @@ test('staff user cannot access admin routes or components', function () {
     Livewire::test(App\Livewire\Products\PriceLevels::class)->assertStatus(403);
     Livewire::test(App\Livewire\Products\Discounts::class)->assertStatus(403);
 });
+
+test('replacing a legacy public-disk receipt deletes the orphaned public file', function () {
+    $this->seed(DatabaseSeeder::class);
+    $admin = User::where('email', 'admin@example.com')->first();
+    $this->actingAs($admin);
+
+    Storage::fake('public');
+    Storage::fake('local');
+
+    $category = \App\Models\ExpenseCategory::create([
+        'company_id' => $admin->company_id,
+        'name' => 'Utilities',
+    ]);
+
+    // Simulate a receipt created before this change: stored on the public disk.
+    $legacyPath = 'expenses/legacy-receipt.pdf';
+    Storage::disk('public')->put($legacyPath, 'old');
+
+    $expense = \App\Models\Expense::create([
+        'company_id' => $admin->company_id,
+        'expense_category_id' => $category->id,
+        'date' => now()->format('Y-m-d'),
+        'description' => 'Old bill',
+        'amount' => 50.00,
+        'receipt_attachment' => $legacyPath,
+    ]);
+
+    Storage::disk('public')->assertExists($legacyPath);
+
+    $newFile = \Illuminate\Http\UploadedFile::fake()->create('new-receipt.pdf', 10, 'application/pdf');
+
+    Livewire::test(App\Livewire\Expenses\Form::class, ['expense' => $expense])
+        ->set('receipt', $newFile)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    // Legacy public file removed; new file stored on the private 'local' disk.
+    Storage::disk('public')->assertMissing($legacyPath);
+
+    $expense->refresh();
+    expect($expense->receipt_attachment)->not->toBe($legacyPath);
+    Storage::disk('local')->assertExists($expense->receipt_attachment);
+});
