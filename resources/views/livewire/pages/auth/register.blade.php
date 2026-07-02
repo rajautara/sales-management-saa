@@ -17,8 +17,15 @@ new #[Layout('layouts.guest')] class extends Component
     public string $password = '';
     public string $password_confirmation = '';
 
+    public function mount(): void
+    {
+        abort_unless(config('auth.registration_enabled'), 404);
+    }
+
     public function register(): void
     {
+        abort_unless(config('auth.registration_enabled'), 404);
+
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],

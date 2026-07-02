@@ -22,6 +22,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Public Registration
+    |--------------------------------------------------------------------------
+    |
+    | This controls whether unauthenticated visitors can create a new company
+    | and first admin user from the public registration page.
+    |
+    */
+
+    'registration_enabled' => env('AUTH_REGISTRATION_ENABLED', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Authentication Guards
     |--------------------------------------------------------------------------
     |

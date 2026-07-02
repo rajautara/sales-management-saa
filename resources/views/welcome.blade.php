@@ -57,7 +57,7 @@
                     <a href="{{ route('login') }}" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors py-2 px-3">
                         Log in
                     </a>
-                    @if (Route::has('register'))
+                    @if (config('auth.registration_enabled') && Route::has('register'))
                         <a href="{{ route('register') }}" class="inline-flex items-center px-4 py-2 bg-gradient-to-tr from-indigo-600 to-violet-600 border border-transparent rounded-xl text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200">
                             Get Started
                         </a>
@@ -95,9 +95,11 @@
                             </svg>
                         </a>
                     @else
-                        <a href="{{ route('register') }}" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 border border-transparent rounded-xl font-bold text-white shadow-xl shadow-indigo-600/25 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200">
-                            Start Free Trial
-                        </a>
+                        @if (config('auth.registration_enabled') && Route::has('register'))
+                            <a href="{{ route('register') }}" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 border border-transparent rounded-xl font-bold text-white shadow-xl shadow-indigo-600/25 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200">
+                                Start Free Trial
+                            </a>
+                        @endif
                         <a href="{{ route('login') }}" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 border border-slate-800 rounded-xl font-bold text-slate-300 bg-slate-900/40 hover:bg-slate-800/60 hover:text-white transition-all duration-200">
                             Sign In to Workspace
                         </a>
