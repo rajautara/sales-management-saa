@@ -32,7 +32,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {{-- Financial Review --}}
             <div class="bg-white shadow-sm sm:rounded-lg p-6 space-y-4">
-                <div class="flex items-center justify-between">
+                <div class="flex flex-wrap items-center justify-between gap-3">
                     <h3 class="text-lg font-medium text-gray-900">Financial Review</h3>
                     <button type="button" wire:click="generateReview" wire:loading.attr="disabled" @disabled(! $configured)
                         class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition disabled:opacity-50">
@@ -52,7 +52,7 @@
 
             {{-- Chat --}}
             <div class="bg-white shadow-sm sm:rounded-lg p-6 flex flex-col" style="min-height: 28rem;">
-                <div class="flex items-center justify-between mb-4">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
                     <h3 class="text-lg font-medium text-gray-900">Ask the Advisor</h3>
                     @if ($messages)
                         <button type="button" wire:click="clearChat" class="text-xs text-gray-500 hover:text-gray-700">Clear</button>

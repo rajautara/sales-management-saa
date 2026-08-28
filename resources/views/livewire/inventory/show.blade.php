@@ -61,6 +61,7 @@
 
     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
         <h3 class="font-semibold text-lg text-gray-800 px-6 py-4 border-b border-gray-200">Stock Movements</h3>
+        <x-table-scroll>
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
@@ -97,8 +98,9 @@
                 @endforelse
             </tbody>
         </table>
+        </x-table-scroll>
 
-        <div class="px-6 py-4">
+        <div class="px-6 py-4 overflow-x-auto">
             {{ $movements->links() }}
         </div>
     </div>

@@ -15,7 +15,7 @@
         </div>
     @endif
 
-    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4 sm:p-6">
         <div class="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
                 <div>
@@ -82,7 +82,8 @@
             </div>
         @endif
 
-        <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg mb-6">
+        <x-table-scroll class="mb-6">
+        <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
@@ -124,6 +125,7 @@
                 </tr>
             </tfoot>
         </table>
+        </x-table-scroll>
 
         @php
             $bankName = \App\Models\Setting::get('bank_name');
@@ -143,6 +145,7 @@
 
         <h3 class="font-medium text-gray-700 mb-2">Payment History</h3>
         @if ($invoice->payments->count())
+            <x-table-scroll>
             <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
                 <thead class="bg-gray-50">
                     <tr>
@@ -171,12 +174,14 @@
                     @endforeach
                 </tbody>
             </table>
+            </x-table-scroll>
         @else
             <p class="text-gray-500">No payments recorded.</p>
         @endif
 
         @if ($invoice->rebates->count())
             <h3 class="font-medium text-gray-700 mb-2 mt-6">Rebate History</h3>
+            <x-table-scroll>
             <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
                 <thead class="bg-gray-50">
                     <tr>
@@ -199,6 +204,7 @@
                     @endforeach
                 </tbody>
             </table>
+            </x-table-scroll>
         @endif
     </div>
 
@@ -213,7 +219,7 @@
                 default => 'bg-gray-100 text-gray-800',
             };
         @endphp
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4 sm:p-6">
             <h3 class="text-lg font-medium text-gray-900 mb-4">e-Invoice (MyInvois / LHDN)</h3>
 
             @if (! $ei)
@@ -262,7 +268,7 @@
 
                     @if ($ei->isCancellable())
                         <input type="text" wire:model="cancelReason" placeholder="Cancellation reason"
-                            class="border-gray-300 focus:border-red-500 focus:ring-red-500 rounded-md shadow-sm text-sm">
+                            class="border-gray-300 focus:border-red-500 focus:ring-red-500 rounded-md shadow-sm text-sm w-full sm:w-auto">
                         <button type="button" wire:click="cancelEInvoice" wire:confirm="Cancel this e-Invoice? This cannot be undone."
                             class="inline-flex items-center px-3 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition">
                             Cancel e-Invoice

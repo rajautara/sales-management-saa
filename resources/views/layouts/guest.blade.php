@@ -39,7 +39,7 @@
                 </a>
             </div>
 
-            <div class="w-full sm:max-w-md mt-2 px-8 py-8 bg-white border border-slate-100 shadow-[0_12px_40px_rgba(0,0,0,0.03)] overflow-hidden sm:rounded-2xl">
+            <div class="w-full sm:max-w-md mt-2 px-4 sm:px-8 py-8 bg-white border border-slate-100 shadow-[0_12px_40px_rgba(0,0,0,0.03)] overflow-hidden sm:rounded-2xl">
                 {{ $slot }}
             </div>
         </div>

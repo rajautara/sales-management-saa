@@ -1,7 +1,7 @@
 <x-public-layout>
     <x-slot name="title">Quotation {{ $quotation->number }}</x-slot>
 
-    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-8 border border-slate-100">
+    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4 sm:p-8 border border-slate-100">
         <!-- Header -->
         <div class="flex flex-col sm:flex-row justify-between items-start gap-4 pb-6 border-b border-slate-100">
             <div>

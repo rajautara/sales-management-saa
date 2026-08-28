@@ -39,6 +39,7 @@
 
                 @error('items') <p class="mb-2 text-sm text-red-600">{{ $message }}</p> @enderror
 
+                <x-table-scroll>
                 <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
                     <thead class="bg-gray-50">
                         <tr>
@@ -64,9 +65,10 @@
                         @endforeach
                     </tbody>
                 </table>
+                </x-table-scroll>
             </div>
 
-            <div class="flex justify-end gap-3">
+            <div class="flex flex-wrap justify-end gap-3">
                 <a href="{{ route('delivery-orders.index') }}" wire:navigate class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                     Cancel
                 </a>

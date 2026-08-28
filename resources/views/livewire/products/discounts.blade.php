@@ -71,7 +71,7 @@
                 <label for="isActive" class="ml-2 block text-sm text-gray-700">Active</label>
             </div>
 
-            <div class="md:col-span-3 flex gap-2">
+            <div class="md:col-span-3 flex flex-wrap gap-2">
                 @if ($editingId)
                     <button type="button" wire:click="cancel" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                         Cancel
@@ -84,7 +84,48 @@
         </form>
     </div>
 
-    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+    <x-responsive-list class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+        <x-slot:cards>
+            @forelse ($discounts as $discount)
+                <div class="p-4 space-y-2">
+                    <div class="flex items-start justify-between gap-3">
+                        <span class="text-sm font-semibold text-gray-900">{{ $discount->name }}</span>
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full shrink-0 {{ $discount->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                            {{ $discount->is_active ? 'Active' : 'Inactive' }}
+                        </span>
+                    </div>
+                    <dl class="grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
+                        <div>
+                            <dt class="text-gray-500">Type</dt>
+                            <dd class="text-gray-900 capitalize">{{ $discount->type->label() }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500">Value</dt>
+                            <dd class="text-gray-900 font-medium">{{ number_format($discount->value, 2) }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500">Applies To</dt>
+                            <dd class="text-gray-900 capitalize">{{ $discount->applies_to }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500">Product</dt>
+                            <dd class="text-gray-900">{{ $discount->product?->name ?? '-' }}</dd>
+                        </div>
+                        <div class="col-span-2">
+                            <dt class="text-gray-500">Period</dt>
+                            <dd class="text-gray-900">{{ $discount->start_date?->format('d/m/Y') ?? '-' }} - {{ $discount->end_date?->format('d/m/Y') ?? '-' }}</dd>
+                        </div>
+                    </dl>
+                    <div class="flex flex-wrap gap-x-4 gap-y-1 pt-1">
+                        <button type="button" wire:click="edit({{ $discount->id }})" class="text-sm font-medium text-indigo-600 hover:text-indigo-900 py-1">Edit</button>
+                        <button type="button" wire:click="delete({{ $discount->id }})" wire:confirm="Are you sure?" class="text-sm font-medium text-red-600 hover:text-red-900 py-1">Delete</button>
+                    </div>
+                </div>
+            @empty
+                <div class="px-4 py-8 text-sm text-gray-500 text-center">No discounts found.</div>
+            @endforelse
+        </x-slot:cards>
+
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
@@ -126,5 +167,5 @@
                 @endforelse
             </tbody>
         </table>
-    </div>
+    </x-responsive-list>
 </div>

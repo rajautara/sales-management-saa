@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 @layer utilities {
+    .touch-scroll {
+        -webkit-overflow-scrolling: touch;
+    }
+
     .shadow-premium {
         box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.02), 0 4px 12px -2px rgba(0, 0, 0, 0.01);
     }

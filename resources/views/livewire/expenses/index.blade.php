@@ -9,7 +9,7 @@
         </div>
     @endif
 
-    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4 flex flex-col lg:flex-row gap-4 items-end justify-between">
+    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4 flex flex-col lg:flex-row gap-4 items-stretch lg:items-end justify-between">
         <div class="flex flex-col md:flex-row gap-4 w-full lg:w-auto flex-wrap">
             <div>
                 <label class="block font-medium text-sm text-gray-700">Search</label>
@@ -37,17 +37,50 @@
             </div>
         </div>
 
-        <div class="flex gap-2">
-            <a href="{{ route('expense-categories.index') }}" wire:navigate class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+        <div class="flex flex-wrap gap-2 w-full lg:w-auto">
+            <a href="{{ route('expense-categories.index') }}" wire:navigate class="inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 flex-1 lg:flex-none">
                 Categories
             </a>
-            <a href="{{ route('expenses.create') }}" wire:navigate class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+            <a href="{{ route('expenses.create') }}" wire:navigate class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 flex-1 lg:flex-none">
                 Add Expense
             </a>
         </div>
     </div>
 
-    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+    <x-responsive-list class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+        <x-slot:cards>
+            @forelse ($expenses as $expense)
+                <div class="p-4 space-y-2">
+                    <div class="flex items-start justify-between gap-3">
+                        <span class="text-sm font-semibold text-gray-900">{{ $expense->description }}</span>
+                        <span class="text-sm font-medium text-gray-900 shrink-0">{{ number_format($expense->amount, 2) }}</span>
+                    </div>
+                    <dl class="grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
+                        <div>
+                            <dt class="text-gray-500">Date</dt>
+                            <dd class="text-gray-900">{{ $expense->date->format('Y-m-d') }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500">Category</dt>
+                            <dd class="text-gray-900">{{ $expense->category?->name ?: '-' }}</dd>
+                        </div>
+                        <div class="col-span-2">
+                            <dt class="text-gray-500">Supplier</dt>
+                            <dd class="text-gray-900">{{ $expense->supplier?->name ?: '-' }}</dd>
+                        </div>
+                    </dl>
+                    <div class="flex flex-wrap gap-x-4 gap-y-1 pt-1">
+                        <a href="{{ route('expenses.edit', $expense) }}" wire:navigate class="text-sm font-medium text-indigo-600 hover:text-indigo-900 py-1">Edit</a>
+                        @if ($expense->receipt_attachment)
+                            <a href="{{ route('expenses.receipt', $expense) }}" target="_blank" class="text-sm font-medium text-slate-600 hover:text-slate-900 py-1">Receipt</a>
+                        @endif
+                    </div>
+                </div>
+            @empty
+                <div class="px-4 py-8 text-sm text-gray-500 text-center">No expenses found.</div>
+            @endforelse
+        </x-slot:cards>
+
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
@@ -87,8 +120,8 @@
             </tbody>
         </table>
 
-        <div class="px-6 py-4">
+        <x-slot:footer>
             {{ $expenses->links() }}
-        </div>
-    </div>
+        </x-slot:footer>
+    </x-responsive-list>
 </div>

@@ -9,7 +9,7 @@
         </div>
     @endif
 
-    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4 sm:p-6">
         <div class="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
                 <div>
@@ -70,7 +70,8 @@
             </div>
         @endif
 
-        <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg mb-6">
+        <x-table-scroll class="mb-6">
+        <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
@@ -102,6 +103,7 @@
                 </tr>
             </tfoot>
         </table>
+        </x-table-scroll>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
             <div>

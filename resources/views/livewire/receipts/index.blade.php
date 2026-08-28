@@ -9,14 +9,47 @@
         </div>
     @endif
 
-    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4 flex flex-col md:flex-row gap-4 items-end justify-between">
+    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4 flex flex-col md:flex-row gap-4 items-stretch md:items-end justify-between">
         <div>
             <label class="block font-medium text-sm text-gray-700">Search</label>
             <input type="text" wire:model.live.debounce.300ms="search" placeholder="Receipt or invoice number..." class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full md:w-64 mt-1">
         </div>
     </div>
 
-    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+    <x-responsive-list class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+        <x-slot:cards>
+            @forelse ($receipts as $receipt)
+                <div class="p-4 space-y-2">
+                    <div class="flex items-start justify-between gap-3">
+                        <span class="text-sm font-semibold text-gray-900">{{ $receipt->number }}</span>
+                        <span class="text-sm font-medium text-gray-900 shrink-0">{{ number_format($receipt->payment->amount, 2) }}</span>
+                    </div>
+                    <dl class="grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
+                        <div>
+                            <dt class="text-gray-500">Date</dt>
+                            <dd class="text-gray-900">{{ $receipt->date->format('Y-m-d') }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500">Invoice</dt>
+                            <dd>
+                                <a href="{{ route('invoices.show', $receipt->payment->invoice) }}" wire:navigate class="text-indigo-600 hover:text-indigo-900">{{ $receipt->payment->invoice->number }}</a>
+                            </dd>
+                        </div>
+                        <div class="col-span-2">
+                            <dt class="text-gray-500">Customer</dt>
+                            <dd class="text-gray-900">{{ $receipt->payment->invoice->customer->name }}</dd>
+                        </div>
+                    </dl>
+                    <div class="flex flex-wrap gap-x-4 gap-y-1 pt-1">
+                        <a href="{{ route('receipts.show', $receipt) }}" wire:navigate class="text-sm font-medium text-indigo-600 hover:text-indigo-900 py-1">View</a>
+                        <a href="{{ route('receipts.pdf', $receipt) }}" target="_blank" class="text-sm font-medium text-slate-600 hover:text-slate-900 py-1">PDF</a>
+                    </div>
+                </div>
+            @empty
+                <div class="px-4 py-8 text-sm text-gray-500 text-center">No receipts found.</div>
+            @endforelse
+        </x-slot:cards>
+
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
@@ -51,8 +84,8 @@
             </tbody>
         </table>
 
-        <div class="px-6 py-4">
+        <x-slot:footer>
             {{ $receipts->links() }}
-        </div>
-    </div>
+        </x-slot:footer>
+    </x-responsive-list>
 </div>

@@ -1,5 +1,5 @@
 <x-slot name="header">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <h2 class="font-bold text-2xl text-slate-900 tracking-tight">Dashboard Overview</h2>
         <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200/60 shadow-sm">{{ now()->format('l, d M Y') }}</span>
     </div>
@@ -111,11 +111,11 @@
 
     <!-- Analytics Chart -->
     <div class="bg-white border border-slate-100/80 rounded-2xl p-6 shadow-premium">
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
             <h3 class="font-bold text-base text-slate-900">Sales Trend (Last 12 Months)</h3>
             <span class="text-xs text-indigo-600 font-semibold bg-indigo-50/50 border border-indigo-100/60 px-2.5 py-1 rounded-full">Revenue (MYR)</span>
         </div>
-        <div class="relative h-80 w-full">
+        <div class="relative h-56 sm:h-80 w-full">
             <canvas x-ref="salesChart"></canvas>
         </div>
     </div>

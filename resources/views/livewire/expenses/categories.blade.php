@@ -24,7 +24,7 @@
                 @error('description') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>
 
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
                 @if ($categoryId)
                     <button type="button" wire:click="resetForm" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                         Cancel
@@ -37,7 +37,22 @@
         </form>
     </div>
 
-    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+    <x-responsive-list class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+        <x-slot:cards>
+            @forelse ($categories as $category)
+                <div class="p-4 space-y-2">
+                    <div class="text-sm font-semibold text-gray-900">{{ $category->name }}</div>
+                    <p class="text-sm text-gray-500">{{ $category->description ?: '-' }}</p>
+                    <div class="flex flex-wrap gap-x-4 gap-y-1 pt-1">
+                        <button type="button" wire:click="edit({{ $category->id }})" class="text-sm font-medium text-indigo-600 hover:text-indigo-900 py-1">Edit</button>
+                        <button type="button" wire:click="delete({{ $category->id }})" wire:confirm="Are you sure you want to delete this category?" class="text-sm font-medium text-red-600 hover:text-red-900 py-1">Delete</button>
+                    </div>
+                </div>
+            @empty
+                <div class="px-4 py-8 text-sm text-gray-500 text-center">No categories found.</div>
+            @endforelse
+        </x-slot:cards>
+
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
@@ -64,8 +79,8 @@
             </tbody>
         </table>
 
-        <div class="px-6 py-4">
+        <x-slot:footer>
             {{ $categories->links() }}
-        </div>
-    </div>
+        </x-slot:footer>
+    </x-responsive-list>
 </div>

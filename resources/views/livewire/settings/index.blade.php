@@ -3,7 +3,7 @@
 </x-slot>
 
 <div class="max-w-7xl mx-auto space-y-6">
-    <div class="flex space-x-6 border-b border-gray-200">
+    <div class="flex space-x-6 border-b border-gray-200 overflow-x-auto">
         <a href="{{ route('settings.index') }}" wire:navigate class="border-b-2 border-indigo-600 pb-3 px-1 text-sm font-semibold text-indigo-600 transition-colors">
             General Settings
         </a>

@@ -25,7 +25,7 @@
                 @error('description') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>
 
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
                 @if ($editingId)
                     <button type="button" wire:click="cancelPriceLevel" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                         Cancel
@@ -40,17 +40,18 @@
 
     @foreach ($priceLevels as $priceLevel)
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-            <div class="flex justify-between items-center mb-4">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
                 <div>
                     <h3 class="text-lg font-medium text-gray-900">{{ $priceLevel->name }}</h3>
                     <p class="text-sm text-gray-500">{{ $priceLevel->description }}</p>
                 </div>
-                <div class="flex gap-2">
-                    <button type="button" wire:click="editPriceLevel({{ $priceLevel->id }})" class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">Edit</button>
-                    <button type="button" wire:click="deletePriceLevel({{ $priceLevel->id }})" wire:confirm="Are you sure?" class="text-red-600 hover:text-red-900 text-sm font-medium">Delete</button>
+                <div class="flex flex-wrap gap-x-4 gap-y-1">
+                    <button type="button" wire:click="editPriceLevel({{ $priceLevel->id }})" class="text-indigo-600 hover:text-indigo-900 text-sm font-medium py-1">Edit</button>
+                    <button type="button" wire:click="deletePriceLevel({{ $priceLevel->id }})" wire:confirm="Are you sure?" class="text-red-600 hover:text-red-900 text-sm font-medium py-1">Delete</button>
                 </div>
             </div>
 
+            <x-table-scroll>
             <table class="min-w-full divide-y divide-gray-200 border rounded-lg overflow-hidden">
                 <thead class="bg-gray-50">
                     <tr>
@@ -95,6 +96,7 @@
                     </tr>
                 </tbody>
             </table>
+            </x-table-scroll>
         </div>
     @endforeach
 

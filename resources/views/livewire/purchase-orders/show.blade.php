@@ -9,7 +9,7 @@
         </div>
     @endif
 
-    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4 sm:p-6">
         <div class="flex flex-col md:flex-row justify-between gap-4">
             <div>
                 <p class="text-sm text-gray-500">Supplier</p>
@@ -36,7 +36,7 @@
         @endif
     </div>
 
-    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4 sm:p-6">
         <div class="flex justify-between items-center mb-4">
             <h3 class="font-semibold text-lg text-gray-800">Status Actions</h3>
         </div>
@@ -55,9 +55,10 @@
     </div>
 
     @if ($showReceiveForm)
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4 sm:p-6">
             <h3 class="font-semibold text-lg text-gray-800 mb-4">Receive Goods</h3>
             <form wire:submit="saveReceive" class="space-y-4">
+                <x-table-scroll>
                 <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
                     <thead class="bg-gray-50">
                         <tr>
@@ -83,6 +84,7 @@
                         @endforeach
                     </tbody>
                 </table>
+                </x-table-scroll>
 
                 <div class="flex justify-end">
                     <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
@@ -95,6 +97,7 @@
 
     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
         <h3 class="font-semibold text-lg text-gray-800 px-6 py-4 border-b border-gray-200">Line Items</h3>
+        <x-table-scroll>
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
@@ -135,5 +138,6 @@
                 </tr>
             </tfoot>
         </table>
+        </x-table-scroll>
     </div>
 </div>

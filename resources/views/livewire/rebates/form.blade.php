@@ -56,7 +56,7 @@
                 @error('notes') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>
 
-            <div class="flex justify-end gap-3">
+            <div class="flex flex-wrap justify-end gap-3">
                 <a href="{{ route('invoices.show', $invoice) }}" wire:navigate class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                     Cancel
                 </a>

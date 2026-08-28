@@ -3,7 +3,7 @@
 </x-slot>
 
 <div class="max-w-7xl mx-auto space-y-6">
-    <div class="flex space-x-6 border-b border-gray-200">
+    <div class="flex space-x-6 border-b border-gray-200 overflow-x-auto">
         <a href="{{ route('settings.index') }}" wire:navigate class="border-b-2 border-transparent pb-3 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors">
             General Settings
         </a>
@@ -55,7 +55,7 @@
                 @error('role') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>
 
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
                 <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                     {{ $editingUserId ? 'Update User' : 'Create User' }}
                 </button>
@@ -68,7 +68,33 @@
         </form>
     </div>
 
-    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+    <x-responsive-list class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+        <x-slot:cards>
+            @forelse ($users as $user)
+                <div class="p-4 space-y-2">
+                    <div class="text-sm font-semibold text-gray-900">{{ $user->name }}</div>
+                    <dl class="grid grid-cols-1 gap-y-1 text-sm">
+                        <div>
+                            <dt class="text-gray-500">Email</dt>
+                            <dd class="text-gray-900 break-all">{{ $user->email }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500">Role</dt>
+                            <dd class="text-gray-900">{{ $user->roles->pluck('name')->join(', ') }}</dd>
+                        </div>
+                    </dl>
+                    <div class="flex flex-wrap gap-x-4 gap-y-1 pt-1">
+                        <button type="button" wire:click="edit({{ $user->id }})" class="text-sm font-medium text-indigo-600 hover:text-indigo-900 py-1">Edit</button>
+                        @if ($user->id !== auth()->id())
+                            <button type="button" wire:click="delete({{ $user->id }})" wire:confirm="Are you sure you want to delete this user?" class="text-sm font-medium text-red-600 hover:text-red-900 py-1">Delete</button>
+                        @endif
+                    </div>
+                </div>
+            @empty
+                <div class="px-4 py-8 text-sm text-gray-500 text-center">No users found.</div>
+            @endforelse
+        </x-slot:cards>
+
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
@@ -99,8 +125,8 @@
             </tbody>
         </table>
 
-        <div class="px-6 py-4">
+        <x-slot:footer>
             {{ $users->links() }}
-        </div>
-    </div>
+        </x-slot:footer>
+    </x-responsive-list>
 </div>
